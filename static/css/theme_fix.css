@@ -299,3 +299,56 @@ body.light-mode .premium-welcome .premium-logo strong,body.light-mode .premium-w
   color: rgba(238,240,255,.65);
   font-size: .9rem;
 }
+
+/* ============================================================
+   RAGENIUS — ChatGPT-style answer presentation
+   ============================================================ */
+.chat-body{padding:18px 20px 24px}
+.chat-body .msg{animation:ragMsgIn .22s ease both}
+@keyframes ragMsgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.msg.bot{background:rgba(17,20,49,.72);border:1px solid rgba(110,120,220,.20);box-shadow:0 8px 28px rgba(0,0,0,.12);padding:16px 18px;border-radius:18px}
+.msg.user{border-radius:18px 18px 6px 18px;box-shadow:0 7px 22px rgba(70,70,180,.18)}
+.answer-content{font-size:.96rem;line-height:1.72;letter-spacing:.002em;color:var(--text-main)}
+.answer-content .answer-line{margin:0 0 8px}
+.answer-content .answer-line:last-child{margin-bottom:0}
+.answer-content h4{margin:14px 0 7px;font-size:1.02rem;line-height:1.35;color:var(--text-main);font-weight:750}
+.answer-content h4:first-child{margin-top:0}
+.answer-content strong{font-weight:750;color:#fff}
+.answer-content .answer-bullet{display:flex;gap:10px;align-items:flex-start;margin:7px 0}
+.answer-content .answer-bullet i{width:6px;height:6px;border-radius:50%;background:var(--cyan);margin-top:.72em;flex:0 0 6px;box-shadow:0 0 8px rgba(34,232,255,.55)}
+.answer-content .answer-step{display:grid;grid-template-columns:28px 1fr;gap:9px;align-items:start;margin:9px 0}
+.answer-content .answer-step>span{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--cyan),var(--purple));color:#fff;font-size:.78rem;font-weight:800}
+.answer-content .answer-step>div{padding-top:2px}
+.answer-content .answer-quote{margin:10px 0;padding:9px 12px;border-left:3px solid var(--cyan);background:rgba(34,232,255,.055);border-radius:0 10px 10px 0;color:var(--text-dim)}
+.answer-content code:not(pre code){padding:2px 6px;border-radius:6px;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.18);font-size:.9em}
+.answer-table-wrap{overflow:auto;margin:12px 0;border:1px solid var(--border-glow);border-radius:12px}
+.answer-table{width:100%;border-collapse:collapse;min-width:420px}
+.answer-table th,.answer-table td{padding:9px 11px;border-bottom:1px solid rgba(140,150,220,.15);text-align:left;vertical-align:top}
+.answer-table th{font-weight:750;background:rgba(34,232,255,.06)}
+.answer-table tr:last-child td{border-bottom:0}
+.answer-flow{margin:12px 0;padding:11px;border:1px solid rgba(168,85,247,.24);border-radius:12px;background:rgba(168,85,247,.055);overflow:auto}
+.flow-chain{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:5px 0}
+.flow-node{padding:6px 9px;border-radius:8px;background:rgba(255,255,255,.055);border:1px solid var(--border-glow);font-size:.84rem}
+.flow-node.start{border-color:rgba(34,232,255,.45)}
+.flow-node.end{border-color:rgba(168,85,247,.45)}
+.flow-arrow{color:var(--cyan);font-size:.9rem}
+.sources-box{display:flex;gap:7px;margin-top:12px;padding-top:9px;border-top:1px solid rgba(140,150,220,.12)}
+.source-chip{border-radius:999px;padding:5px 10px;font-size:.72rem;border:1px solid var(--border-glow);background:rgba(255,255,255,.035);color:var(--text-dim);cursor:pointer}
+.source-chip:hover{color:#fff;border-color:var(--cyan);background:rgba(34,232,255,.07)}
+.msg-actions{margin-top:9px;opacity:.8;transition:opacity .18s}
+.msg.bot:hover .msg-actions{opacity:1}
+body.light-mode .msg.bot{background:#fff;border-color:rgba(70,58,190,.18);box-shadow:0 8px 24px rgba(40,50,120,.08)}
+body.light-mode .answer-content strong{color:#151a38}
+body.light-mode .answer-content .answer-bullet i{background:#4b5cff}
+body.light-mode .answer-content .answer-quote{background:#f5f7ff;color:#4a5478}
+body.light-mode .answer-content code:not(pre code){background:#f1edff;border-color:#ddd4ff}
+body.light-mode .answer-content .answer-step>span{box-shadow:0 4px 12px rgba(70,58,190,.15)}
+body.light-mode .flow-node{background:#f8f8ff}
+body.light-mode .source-chip{background:#f6f7ff;color:#454e6b}
+
+@media(max-width:768px){
+  .chat-body{padding:12px 9px 18px}
+  .msg.bot{padding:14px 14px;border-radius:16px}
+  .answer-content{font-size:.93rem;line-height:1.65}
+  .answer-table{min-width:360px}
+}
