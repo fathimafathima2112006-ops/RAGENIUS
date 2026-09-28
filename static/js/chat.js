@@ -384,27 +384,52 @@
   });
   document.querySelectorAll('.quick-prompt-chip').forEach(chip => chip.addEventListener('click', () => sendMessage(chip.dataset.prompt)));
 
-  function startNewChat() {
-    currentConversationId = null;
+  async function createFreshConversation() {
+    const res = await fetch('/api/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    const data = await res.json();
+    if (!res.ok || !data.success || !data.conversation_id) throw new Error(data.error || 'Could not create conversation');
+    currentConversationId = data.conversation_id;
     saveCurrentConversation();
-    history.replaceState({}, '', '/dashboard');
-    if (chatTitle) chatTitle.textContent = 'New Conversation';
-    chatBody.innerHTML = '';
-    appendMessage('bot', 'New conversation started. Ask me anything!');
-    updateContextPanel([]);
-    updateAIActivity([]);
-    chatInput?.focus();
+    history.replaceState({}, '', `/dashboard?conv=${encodeURIComponent(currentConversationId)}`);
+    return data;
+  }
+
+  async function startNewChat() {
+    try {
+      const data = await createFreshConversation();
+      if (chatTitle) chatTitle.textContent = data.title || 'New Conversation';
+      chatBody.innerHTML = '';
+      appendMessage('bot', 'New conversation started. Ask me anything!');
+      updateContextPanel([]);
+      updateAIActivity([]);
+      chatInput?.focus();
+    } catch {
+      showToast('Could not start a new conversation', 'error');
+    }
   }
   document.getElementById('newChatBtn')?.addEventListener('click', startNewChat);
   document.getElementById('qaNewChat')?.addEventListener('click', startNewChat);
 
   document.getElementById('deleteChatBtn')?.addEventListener('click', async () => {
     if (!currentConversationId) { showToast('No conversation selected'); return; }
+    const idToDelete = currentConversationId;
     try {
-      const res = await fetch(`/api/conversations/${currentConversationId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/conversations/${encodeURIComponent(idToDelete)}`, { method: 'DELETE' });
       const data = await res.json();
-      if (data.success) { showToast('Conversation deleted', 'success'); startNewChat(); }
-    } catch { showToast('Could not delete conversation', 'error'); }
+      if (!res.ok || !data.success) throw new Error(data.error || 'Delete failed');
+      // The deleted ID is cleared before the replacement conversation is created.
+      currentConversationId = null;
+      saveCurrentConversation();
+      const fresh = await createFreshConversation();
+      chatBody.innerHTML = '';
+      if (chatTitle) chatTitle.textContent = fresh.title || 'New Conversation';
+      appendMessage('bot', 'New conversation started. Ask me anything!');
+      updateContextPanel([]);
+      updateAIActivity([]);
+      showToast('Conversation deleted', 'success');
+    } catch (err) {
+      showToast(err?.message || 'Could not delete conversation', 'error');
+    }
   });
 
   // Restore the same conversation after visiting another page.

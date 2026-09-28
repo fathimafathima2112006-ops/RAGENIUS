@@ -87,6 +87,22 @@
     }
   }
 
+  async function removeProfilePhoto() {
+    try {
+      const res = await fetch('/api/settings/profile-photo', { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Could not remove profile photo');
+      if (avatarContainer) {
+        avatarContainer.innerHTML = `<div id="profilePreview" class="profile-photo avatar-placeholder" style="width:100%;height:100%;background:#22e8ff;color:#0f1128;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:1.4rem;">${(window.RAGENIUS_USERNAME || '?').charAt(0).toUpperCase()}</div>`;
+      }
+      const ring = document.querySelector('.avatar-ring');
+      if (ring) ring.innerHTML = `<span class="header-profile-photo avatar-letter">${(window.RAGENIUS_USERNAME || '?').charAt(0).toUpperCase()}</span>`;
+      showToast('Profile photo removed. Your first-letter avatar is back.', 'success');
+    } catch (err) { showToast(err?.message || 'Could not remove profile photo', 'error'); }
+  }
+
+  document.getElementById('removeProfilePhotoBtn')?.addEventListener('click', removeProfilePhoto);
+
   // ---- 2. Preferences (Persisted locally per-browser) ----
   const defaultLangSelect = document.getElementById('defaultLangSelect');
   const autoReadToggle = document.getElementById('autoReadToggle');
