@@ -1,11 +1,25 @@
-"""Robust Groq client wrapper for RAGENIUS."""
+"""Robust Groq client wrapper for RAGENIUS.
+
+Uses a currently supported Groq production model by default and gracefully
+falls back when a configured model has been deprecated or is unavailable.
+"""
 import os
 from dotenv import load_dotenv
 from groq import Groq
 
 load_dotenv()
-GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile").strip()
-FALLBACK_GROQ_MODEL = "llama-3.3-70b-versatile"
+
+# Groq deprecated llama-3.3-70b-versatile for developer/free usage on 2026-08-16.
+# Keep the env variable configurable, but don't let an old value break the app.
+_DEPRECATED_MODELS = {
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant",
+}
+_DEFAULT_MODEL = "openai/gpt-oss-120b"
+_FALLBACK_MODELS = ["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "openai/gpt-oss-20b"]
+
+_requested_model = os.environ.get("GROQ_MODEL", "").strip()
+GROQ_MODEL = _DEFAULT_MODEL if not _requested_model or _requested_model in _DEPRECATED_MODELS else _requested_model
 _client = None
 
 
@@ -17,11 +31,15 @@ class GroqAuthenticationError(RuntimeError):
     pass
 
 
+class GroqProviderError(RuntimeError):
+    pass
+
+
 def _api_key():
     key = (os.environ.get("GROQ_API_KEY") or "").strip().strip('"').strip("'")
     if not key or key.lower() in {"your_groq_api_key_here", "your_api_key_here", "changeme"}:
         raise GroqConfigurationError(
-            "Groq API key is not configured. Add a valid GROQ_API_KEY to the .env file and restart RAGENIUS."
+            "Groq API key is not configured. Add GROQ_API_KEY in Vercel Environment Variables and redeploy."
         )
     return key
 
@@ -34,46 +52,56 @@ def _get_client():
     return _client
 
 
-def chat_groq(system_prompt, messages, model=None, max_tokens=1200, temperature=0.4, low_reasoning=False):
-    """Chat completion with real multi-turn history.
-    messages = [{"role": "user"|"assistant", "content": "..."}, ...]
-    low_reasoning=True keeps gpt-oss reasoning short so small token budgets still return text."""
-    model_name = (model or GROQ_MODEL)
-    kwargs = {}
-    if low_reasoning and "gpt-oss" in model_name.lower():
-        kwargs["extra_body"] = {"reasoning_effort": "low"}
-    payload = {
-        "model": model_name,
-        "messages": [{"role": "system", "content": system_prompt}] + list(messages),
-        "max_tokens": max_tokens,
-        "temperature": temperature,
-        **kwargs,
-    }
-    try:
-        completion = _get_client().chat.completions.create(**payload)
-        return (completion.choices[0].message.content or "").strip()
-    except Exception as exc:
-        status = getattr(exc, "status_code", None)
-        message = str(exc)
-        lower = message.lower()
-        if status == 401 or "invalid_api_key" in lower or "authentication" in lower:
-            raise GroqAuthenticationError(
-                "The Groq API key is invalid or expired. Set a valid GROQ_API_KEY in .env and restart RAGENIUS."
-            ) from exc
+def _is_auth_error(exc):
+    status = getattr(exc, "status_code", None)
+    message = str(exc).lower()
+    return status == 401 or "invalid_api_key" in message or "authentication" in message
 
-        # Keep the app resilient when an old/deprecated model is configured.
-        # Retry once with a known Groq production model instead of surfacing a
-        # provider/model error to the user.
-        model_error = status in {400, 404} or any(token in lower for token in (
-            "model not found", "invalid model", "model_decommissioned", "does not exist", "unknown model"
-        ))
-        if model_error and model_name != FALLBACK_GROQ_MODEL:
-            retry_payload = dict(payload)
-            retry_payload["model"] = FALLBACK_GROQ_MODEL
-            retry_payload.pop("extra_body", None)
-            completion = _get_client().chat.completions.create(**retry_payload)
-            return (completion.choices[0].message.content or "").strip()
-        raise
+
+def _is_model_error(exc):
+    status = getattr(exc, "status_code", None)
+    message = str(exc).lower()
+    markers = ("model_not_found", "model does not exist", "decommissioned", "deprecated", "not available", "unknown model")
+    return status in {400, 404, 403} and any(m in message for m in markers)
+
+
+def chat_groq(system_prompt, messages, model=None, max_tokens=1200, temperature=0.4, low_reasoning=False):
+    """Return a chat completion, retrying with current models if needed."""
+    client = _get_client()
+    requested = (model or GROQ_MODEL).strip()
+    candidates = [requested] + [m for m in _FALLBACK_MODELS if m != requested]
+    last_exc = None
+
+    for model_name in candidates:
+        kwargs = {}
+        if low_reasoning and "gpt-oss" in model_name.lower():
+            kwargs["extra_body"] = {"reasoning_effort": "low"}
+        try:
+            completion = client.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "system", "content": system_prompt}] + list(messages),
+                max_tokens=max_tokens,
+                temperature=temperature,
+                **kwargs,
+            )
+            content = (completion.choices[0].message.content or "").strip()
+            if content:
+                return content
+        except Exception as exc:
+            last_exc = exc
+            if _is_auth_error(exc):
+                raise GroqAuthenticationError(
+                    "The GROQ_API_KEY is invalid or expired. Update the Vercel Environment Variable and redeploy."
+                ) from exc
+            if _is_model_error(exc):
+                continue
+            # Rate limits/transient server failures should be surfaced rather than
+            # silently producing a misleading answer.
+            raise GroqProviderError(str(exc)) from exc
+
+    if last_exc:
+        raise GroqProviderError(str(last_exc)) from last_exc
+    raise GroqProviderError("No Groq model returned an answer.")
 
 
 def ask_groq(system_prompt, user_prompt, model=None, max_tokens=1200, temperature=0.4):
