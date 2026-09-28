@@ -385,20 +385,41 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    # /login page-ஐ காட்ட வேண்டாம்.
+    # User already logged in என்றால் நேராக dashboard.
+    if current_user.is_authenticated:
+        return redirect(url_for("dashboard"))
+
     if request.method == "POST":
-        identifier = request.form.get("identifier", "").strip(); password = request.form.get("password", ""); remember = bool(request.form.get("remember"))
-        user = User.query.filter((User.username == identifier) | (User.email == identifier.lower())).first()
+        identifier = request.form.get("identifier", "").strip()
+        password = request.form.get("password", "")
+
+        user = User.query.filter(
+            (User.username == identifier) |
+            (User.email == identifier.lower())
+        ).first()
+
         if user and user.check_password(password):
-            login_user(user, remember=remember); audit("login", {"method": "password"}, user.id); return redirect(url_for("dashboard"))
-        flash("Invalid username/email or password.", "error"); return redirect(url_for("login"))
-    return render_template("login.html")
+            login_user(user)
+            audit("login", {"method": "password"}, user.id)
+
+            # Successful login → DIRECT DASHBOARD
+            return redirect(url_for("dashboard"))
+
+        # Wrong login → back to FIRST/HOME page
+        flash("Invalid username/email or password.", "error")
+        return redirect(url_for("welcome"))
+
+    # /login URL open செய்தாலும் second login page காட்டக்கூடாது
+    return redirect(url_for("welcome"))
 
 
 @app.route("/logout")
 @login_required
 def logout():
-    audit("logout", user_id=current_user.id); logout_user(); return redirect(url_for("welcome"))
-
+    audit("logout", user_id=current_user.id)
+    logout_user()
+    return redirect(url_for("welcome"))
 
 # ---------------------------------------------------------------------------
 # Pages
@@ -1342,34 +1363,24 @@ def chat():
             if not answer:
                 answer = "Sorry, I couldn't put that answer together. Could you try asking once more? 🙏"
         except (GroqConfigurationError, GroqAuthenticationError) as e:
-            # Provider failures are handled gracefully. Never render raw provider
-            # errors inside the chat UI; keep the conversation usable with the
-            # best local/document/web fallback available.
             provider_error = str(e)
-            print(f"[RAGENIUS] AI provider fallback: {provider_error}")
             if meaningful:
                 answer = fallback_grounded_answer(user_message, meaningful, response_language)
             elif web_results:
                 answer = fallback_web_answer(user_message, web_results, response_language)
             else:
                 answer = offline_conversational_fallback(user_message, response_language) or (
-                    "I’m ready to help. The local assistant mode is active right now, so you can still use your documents, navigation and chat history."
+                    "I’m ready to help with that. 💙 For full open-domain AI answers, connect a valid Groq API key in the RAGENIUS .env file and restart the app."
                     if language not in {"Tamil", "Tanglish"} else
-                    "Naan help panna ready-ah iruken. Ippo local assistant mode active-ah irukku; documents, navigation, chat history ellam use pannalaam.")
-        except Exception as e:
-            # Unexpected provider/network/model failures should degrade gracefully
-            # rather than showing a scary technical error to end users.
-            provider_error = str(e)
-            print(f"[RAGENIUS] Unexpected AI provider fallback: {provider_error}")
+                    "Naan help panna ready-ah iruken 💙 Open-domain full AI answers-ku valid Groq API key connect panni app restart pannunga.")
+        except Exception:
+            provider_error = "The AI provider is temporarily unavailable."
             if meaningful:
                 answer = fallback_grounded_answer(user_message, meaningful, response_language)
             elif web_results:
                 answer = fallback_web_answer(user_message, web_results, response_language)
             else:
-                answer = offline_conversational_fallback(user_message, response_language) or (
-                    "I’m ready to help. Local assistant mode is active, and the rest of RAGENIUS is available normally."
-                    if language not in {"Tamil", "Tanglish"} else
-                    "Naan help panna ready-ah iruken. Local assistant mode active-ah irukku; RAGENIUS-oda other features normal-ah use pannalaam.")
+                answer = provider_error + "\n\nPlease check the AI provider configuration and try again."
         top_score = max([s.get("score", 0) for s in sources if s.get("type") == "pdf"] or [0])
         confidence = round(min(99.0, max(35.0, top_score*100 if sources else 62.0)), 1)
         if provider_error and meaningful:
