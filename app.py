@@ -366,6 +366,30 @@ def compute_stats(user_id):
 
 
 # ---------------------------------------------------------------------------
+# Active conversation/session helpers
+# ---------------------------------------------------------------------------
+def create_active_conversation(user_id, title="New Conversation"):
+    """Create exactly one blank conversation for the current login/session."""
+    conv = Conversation(user_id=user_id, title=title)
+    db.session.add(conv)
+    db.session.commit()
+    session["active_conversation_id"] = conv.id
+    return conv
+
+
+def get_active_conversation(user_id):
+    raw = session.get("active_conversation_id")
+    if raw:
+        try:
+            conv = Conversation.query.filter_by(id=int(raw), user_id=user_id).first()
+            if conv:
+                return conv
+        except (TypeError, ValueError):
+            pass
+    return create_active_conversation(user_id)
+
+
+# ---------------------------------------------------------------------------
 # Auth
 # ---------------------------------------------------------------------------
 @app.route("/")
@@ -384,7 +408,7 @@ def register():
         if User.query.filter((User.username == username) | (User.email == email)).first():
             flash("Username or email already registered.", "error"); return redirect(url_for("register"))
         user = User(username=username, email=email, role="user", tenant_id=f"tenant-{uuid.uuid4().hex[:10]}")
-        user.set_password(password); db.session.add(user); db.session.commit(); login_user(user); audit("register", {"username": username}, user.id)
+        user.set_password(password); db.session.add(user); db.session.commit(); login_user(user); session.pop("active_conversation_id", None); create_active_conversation(user.id); audit("register", {"username": username}, user.id)
         return redirect(url_for("dashboard"))
     return render_template("register.html")
 
@@ -395,7 +419,7 @@ def login():
         identifier = request.form.get("identifier", "").strip(); password = request.form.get("password", ""); remember = bool(request.form.get("remember"))
         user = User.query.filter((User.username == identifier) | (User.email == identifier.lower())).first()
         if user and user.check_password(password):
-            login_user(user, remember=remember); audit("login", {"method": "password"}, user.id); return redirect(url_for("dashboard"))
+            login_user(user, remember=remember); session.pop("active_conversation_id", None); create_active_conversation(user.id); audit("login", {"method": "password"}, user.id); return redirect(url_for("dashboard"))
         flash("Invalid username/email or password.", "error"); return redirect(url_for("welcome"))
     return redirect(url_for("welcome"))
 
@@ -403,7 +427,7 @@ def login():
 @app.route("/logout")
 @login_required
 def logout():
-    audit("logout", user_id=current_user.id); logout_user(); return redirect(url_for("welcome"))
+    audit("logout", user_id=current_user.id); session.pop("active_conversation_id", None); logout_user(); return redirect(url_for("welcome"))
 
 
 # ---------------------------------------------------------------------------
@@ -413,7 +437,11 @@ def logout():
 @login_required
 def dashboard():
     raw = request.args.get("conv"); load_conv = None
-    if raw and raw.isdigit() and Conversation.query.filter_by(id=int(raw), user_id=current_user.id).first(): load_conv = int(raw)
+    if raw and raw.isdigit() and Conversation.query.filter_by(id=int(raw), user_id=current_user.id).first():
+        load_conv = int(raw)
+        session["active_conversation_id"] = load_conv
+    else:
+        load_conv = get_active_conversation(current_user.id).id
     return render_template("dashboard.html", stats=compute_stats(current_user.id), active="dashboard", groq_model=GROQ_MODEL, groq_configured=bool(os.environ.get("GROQ_API_KEY")), load_conv=load_conv)
 
 
@@ -580,6 +608,21 @@ def upload_profile_photo():
 
     audit("profile_photo_update", {"filename": filename}, current_user.id)
     return jsonify({"success": True, "url": url_for("profile_photo", filename=filename)})
+
+
+@app.route("/api/settings/profile-photo", methods=["DELETE"])
+@login_required
+def remove_profile_photo():
+    old = current_user.profile_photo or ""
+    current_user.profile_photo = ""
+    current_user.profile_photo_data = ""
+    current_user.profile_photo_mime = ""
+    db.session.commit()
+    if old and old.startswith(f"profile_{current_user.id}_"):
+        try: os.remove(os.path.join(UPLOAD_FOLDER, old))
+        except OSError: pass
+    audit("profile_photo_remove", {"filename": old}, current_user.id)
+    return jsonify({"success": True, "use_letter": True})
 
 
 @app.route("/api/settings/change-password", methods=["POST"])
@@ -915,7 +958,9 @@ LANGUAGE_INSTRUCTIONS={
 @app.route("/api/conversations",methods=["POST"])
 @login_required
 def new_conversation():
-    c=Conversation(user_id=current_user.id,title="New Conversation"); db.session.add(c); db.session.commit(); return jsonify({"success":True,"conversation_id":c.id})
+    # Explicit New Chat always creates a real, empty conversation.
+    c = create_active_conversation(current_user.id)
+    return jsonify({"success": True, "conversation_id": c.id, "title": c.title})
 
 
 @app.route("/api/conversations/<int:conv_id>/messages")
@@ -1294,8 +1339,10 @@ def chat():
     # message follows whatever language the user naturally uses.
     response_language = explicit_language or (detected_language if language == "Auto" else language)
     auto_follow_after_turn = bool(explicit_language)
-    conv=Conversation.query.filter_by(id=conv_id,user_id=current_user.id).first() if conv_id else None
-    if not conv: conv=Conversation(user_id=current_user.id,title=user_message[:55]); db.session.add(conv); db.session.flush()
+    conv = Conversation.query.filter_by(id=conv_id, user_id=current_user.id).first() if conv_id else None
+    if not conv:
+        conv = get_active_conversation(current_user.id)
+    session["active_conversation_id"] = conv.id
     if conv.title=="New Conversation" or not conv.title: conv.title=user_message[:55]
     db.session.add(Message(conversation_id=conv.id,role="user",content=user_message)); db.session.commit()
 
@@ -1398,14 +1445,23 @@ def chat():
                     "I’m ready to help with that. 💙 For full open-domain AI answers, connect a valid Groq API key in the RAGENIUS .env file and restart the app."
                     if language not in {"Tamil", "Tanglish"} else
                     "Naan help panna ready-ah iruken 💙 Open-domain full AI answers-ku valid Groq API key connect panni app restart pannunga.")
-        except Exception:
-            provider_error = "The AI provider is temporarily unavailable."
+        except Exception as exc:
+            # Never show raw provider/SDK errors to the user. Use grounded/local
+            # fallbacks where possible and keep the chat usable for a viva demo.
+            provider_error = "AI provider fallback used"
             if meaningful:
                 answer = fallback_grounded_answer(user_message, meaningful, response_language)
             elif web_results:
                 answer = fallback_web_answer(user_message, web_results, response_language)
             else:
-                answer = provider_error + "\n\nPlease check the AI provider configuration and try again."
+                answer = offline_conversational_fallback(user_message, response_language) or meaning_fallback(user_message, response_language)
+                if not answer:
+                    if response_language == "Tamil":
+                        answer = "இப்போது AI service-க்கு connection கிடைக்கவில்லை. தயவுசெய்து சிறிது நேரம் கழித்து மீண்டும் கேளுங்கள்."
+                    elif response_language == "Tanglish":
+                        answer = "Ippo AI service-ku connection kidaikkala. Konjam neram kazhichu same question-ah try pannunga."
+                    else:
+                        answer = "The AI service is temporarily unavailable. Please try the same question again in a moment."
         top_score = max([s.get("score", 0) for s in sources if s.get("type") == "pdf"] or [0])
         confidence = round(min(99.0, max(35.0, top_score*100 if sources else 62.0)), 1)
         if provider_error and meaningful:
@@ -1424,7 +1480,27 @@ def chat():
 @app.route("/api/conversations/<int:conv_id>",methods=["DELETE"])
 @login_required
 def delete_conversation(conv_id):
-    c=Conversation.query.filter_by(id=conv_id,user_id=current_user.id).first_or_404(); db.session.delete(c); db.session.commit(); audit("conversation_delete",{"conversation_id":conv_id},current_user.id); return jsonify({"success":True})
+    c = Conversation.query.filter_by(id=conv_id, user_id=current_user.id).first()
+    if not c:
+        return jsonify({"success": False, "error": "Conversation not found."}), 404
+    try:
+        # Delete dependent records explicitly so this also works on SQLite
+        # deployments where foreign-key cascade settings vary.
+        message_ids = [m.id for m in Message.query.filter_by(conversation_id=c.id).all()]
+        if message_ids:
+            Feedback.query.filter(Feedback.message_id.in_(message_ids)).delete(synchronize_session=False)
+            Evaluation.query.filter(Evaluation.message_id.in_(message_ids)).delete(synchronize_session=False)
+        RetrievalEvent.query.filter_by(conversation_id=c.id).delete(synchronize_session=False)
+        Message.query.filter_by(conversation_id=c.id).delete(synchronize_session=False)
+        db.session.delete(c)
+        db.session.commit()
+        if session.get("active_conversation_id") == c.id:
+            session.pop("active_conversation_id", None)
+        audit("conversation_delete", {"conversation_id": conv_id}, current_user.id)
+        return jsonify({"success": True, "deleted_conversation_id": conv_id})
+    except Exception:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Conversation could not be deleted. Please try again."}), 500
 
 
 @app.route("/api/feedback",methods=["POST"])
