@@ -1,1 +1,40 @@
+<div class="chat-page-grid chat-only">
+  <div class="glass-panel chat-panel chat-panel-tall">
+    <div class="chat-head">
+      <div class="bot-mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A3.5 3.5 0 0 0 6 5.5c-2 .5-3 2.2-3 4 0 1 .4 1.9 1 2.5-.6.7-1 1.600-1 2.700 0 2 1.500 3.500 3.500 3.500A3 3 0 0 0 9.500 21V2z"/><path d="M14.500 2A3.500 3.500 0 0 1 18 5.500c2 .5 3 2.200 3 4 0 1-.4 1.900-1 2.500.6.700 1 1.600 1 2.700 0 2-1.500 3.500-3.500 3.500a3 3 0 0 1-3-2.200V2z"/></svg></div>
+      <div class="info">
+        <h4 id="chatTitle">{{ panel_title|default('New Conversation') }}</h4>
+        <small id="chatSubtitle">{{ panel_subtitle|default('Ask anything from your knowledge base') }}</small>
+      </div>
+      <div class="tools">
+        <span title="New chat" id="newChatBtn" class="tool-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span title="Delete chat" id="deleteChatBtn" class="tool-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></span>
+      </div>
+    </div>
 
+    {% if show_quick_math %}
+    <div class="quick-prompt-row">
+      <button class="quick-prompt-chip" data-prompt="Solve: If a number tripled and increased by 5 equals 50, find the number.">🔢 Algebra puzzle</button>
+      <button class="quick-prompt-chip" data-prompt="A train travels 60 km in 45 minutes. What is its speed in km/h?">🚆 Speed problem</button>
+      <button class="quick-prompt-chip" data-prompt="If all cats are animals and some animals are wild, are all cats wild? Explain the logic.">🧩 Logic puzzle</button>
+      <button class="quick-prompt-chip" data-prompt="ஒரு எண்ணின் 3 மடங்கு அதன் 5 கூட்டினால் 50 ஆகும். எண்ணைக் காண்.">🇮🇳 தமிழ் கணிதம்</button>
+    </div>
+    {% endif %}
+
+    <div class="chat-body" id="chatBody">
+      <div class="msg bot">
+        <div class="answer-content" id="chatGreeting">{{ greeting_text|default("வணக்கம்! நான் RAGENIUS 🧠 — Ask me anything in English, Tamil, Tanglish, Hindi, Telugu, Malayalam or Kannada. Upload a document and I'll answer using it, or just ask me a maths / logic question!") }}</div>
+        <span class="time">now</span>
+      </div>
+    </div>
+
+    <div class="chat-input-row">
+      <button class="side-btn" id="attachBtn" title="Attach document" data-i18n-title="attach_pdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.400 11.100-9.200 9.200a6 6 0 0 1-8.500-8.500l9.200-9.200a4 4 0 0 1 5.700 5.700l-9.200 9.200a2 2 0 0 1-2.800-2.800l8.500-8.500"/></svg></button>
+      <input type="file" id="fileInput" accept="*/*" class="hidden">
+      <small class="upload-limit-hint">Up to 600 MB</small>
+      <textarea id="chatInput" rows="1" data-i18n-placeholder="chat_placeholder" placeholder="Ask anything... (Type, speak or upload document)"></textarea>
+      <button class="side-btn mic" id="micBtn" title="Voice input" data-i18n-title="voice_input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg></button>
+      <button class="send-btn" id="sendBtn" title="Send" data-i18n-title="send"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.400 20.400 21 12 3.400 3.600 3.400 10l12 2-12 2z"/></svg></button>
+    </div>
+  </div>
+</div>
