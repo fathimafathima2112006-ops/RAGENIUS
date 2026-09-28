@@ -65,6 +65,11 @@ def _is_model_error(exc):
     return status in {400, 404, 403} and any(m in message for m in markers)
 
 
+def _is_transient_error(exc):
+    status = getattr(exc, "status_code", None)
+    return status in {408, 409, 429, 500, 502, 503, 504}
+
+
 def chat_groq(system_prompt, messages, model=None, max_tokens=1200, temperature=0.4, low_reasoning=False):
     """Return a chat completion, retrying with current models if needed."""
     client = _get_client()
@@ -93,10 +98,15 @@ def chat_groq(system_prompt, messages, model=None, max_tokens=1200, temperature=
                 raise GroqAuthenticationError(
                     "The GROQ_API_KEY is invalid or expired. Update the Vercel Environment Variable and redeploy."
                 ) from exc
-            if _is_model_error(exc):
+            # Model retirement, rate limits and temporary provider failures should
+            # try the next supported model before giving up.
+            if _is_model_error(exc) or _is_transient_error(exc):
                 continue
-            # Rate limits/transient server failures should be surfaced rather than
-            # silently producing a misleading answer.
+            # Some Groq SDK errors do not expose a status code. If the message
+            # clearly indicates a temporary/model problem, also try the fallback.
+            message = str(exc).lower()
+            if any(term in message for term in ("timeout", "temporarily", "overloaded", "rate limit", "server error")):
+                continue
             raise GroqProviderError(str(exc)) from exc
 
     if last_exc:
