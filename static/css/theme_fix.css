@@ -474,3 +474,65 @@ button, a, input, textarea, select { touch-action: manipulation; }
   }
   .bottom-nav { padding-bottom: max(7px, env(safe-area-inset-bottom)); }
 }
+
+
+/* ============================================================
+   FINAL RESPONSIVE DRAWER — labels must remain visible when the
+   mobile/tablet menu is opened.  The desktop sidebar keeps its
+   normal labels; only the closed drawer is hidden off-screen.
+   ============================================================ */
+@media (max-width: 900px) {
+  body.nav-open .sidebar,
+  body.nav-open .layout.sidebar-collapsed .sidebar {
+    width: min(330px, 88vw) !important;
+    max-width: 88vw !important;
+    padding: 18px 14px 28px !important;
+  }
+  body.nav-open .sidebar .side-section-label,
+  body.nav-open .layout.sidebar-collapsed .side-section-label {
+    display: block !important;
+    visibility: visible !important;
+    opacity: .9 !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  body.nav-open .sidebar .nav-item,
+  body.nav-open .layout.sidebar-collapsed .nav-item {
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-height: 48px !important;
+    padding: 9px 12px !important;
+    white-space: nowrap !important;
+  }
+  body.nav-open .sidebar .nav-item > span:not(.ic),
+  body.nav-open .layout.sidebar-collapsed .sidebar .nav-item > span:not(.ic) {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    color: inherit !important;
+    font-size: .9rem !important;
+    line-height: 1.25 !important;
+    flex: 1 1 auto !important;
+  }
+  body.nav-open .sidebar .nav-item .ic,
+  body.nav-open .layout.sidebar-collapsed .sidebar .nav-item .ic {
+    display: inline-flex !important;
+    visibility: visible !important;
+    flex: 0 0 34px !important;
+  }
+}
+
+@media (max-width: 520px) {
+  body.nav-open .sidebar { width: min(310px, 86vw) !important; }
+  body.nav-open .sidebar .nav-item > span:not(.ic),
+  body.nav-open .layout.sidebar-collapsed .sidebar .nav-item > span:not(.ic) {
+    font-size: .88rem !important;
+  }
+}
