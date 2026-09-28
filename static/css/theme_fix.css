@@ -426,3 +426,51 @@ button, a, input, textarea, select { touch-action: manipulation; }
   .avatar-ring { width: 36px !important; height: 36px !important; }
   .bottom-nav a span { font-size: .54rem; }
 }
+
+/* FINAL MOBILE SCROLL FIX */
+@media (max-width: 900px) {
+  html, body {
+    height: auto !important;
+    min-height: 100%;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  body { position: relative; }
+  .app-shell {
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow: visible !important;
+  }
+  .layout, .layout.sidebar-collapsed {
+    min-height: calc(100dvh - var(--topbar-h, 64px)) !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .page-content {
+    height: auto !important;
+    min-height: calc(100dvh - var(--topbar-h, 64px)) !important;
+    max-height: none !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    padding-bottom: 92px !important;
+  }
+  .page-content:has(.chat-only) {
+    height: calc(100dvh - var(--topbar-h, 64px)) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding-bottom: 0 !important;
+  }
+  .chat-page-grid.chat-only,
+  .chat-panel-tall {
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+  .chat-panel-tall .chat-body {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: auto;
+    touch-action: pan-y;
+  }
+  .bottom-nav { padding-bottom: max(7px, env(safe-area-inset-bottom)); }
+}
