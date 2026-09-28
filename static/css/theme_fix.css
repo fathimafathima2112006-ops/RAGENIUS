@@ -352,3 +352,77 @@ body.light-mode .source-chip{background:#f6f7ff;color:#454e6b}
   .answer-content{font-size:.93rem;line-height:1.65}
   .answer-table{min-width:360px}
 }
+
+/* RAGENIUS Mobile-first polish: phones + small tablets */
+html { -webkit-text-size-adjust: 100%; }
+body { min-width: 320px; overflow-x: hidden; }
+button, a, input, textarea, select { touch-action: manipulation; }
+
+@media (max-width: 900px) {
+  .app-shell { min-height: 100dvh; }
+  .topbar { min-height: 60px; position: sticky; top: 0; z-index: 80; }
+  .brand { min-width: 0; }
+  .brand-gradient { white-space: nowrap; }
+  .actions { min-width: 0; }
+  .user-chip { max-width: 48px; }
+  .user-chip .icon-btn { display: none; }
+  .layout { min-height: calc(100dvh - 60px); padding: 8px 8px 76px !important; }
+  .page-content { min-width: 0; overflow-x: hidden; }
+  .sidebar { top: 66px; max-height: calc(100dvh - 82px); }
+  .nav-item { min-height: 46px; }
+  .footer-bar { display: none; }
+  .bottom-nav {
+    position: fixed; left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom));
+    z-index: 100; display: grid; grid-template-columns: repeat(5, 1fr);
+    padding: 7px 5px; border-radius: 18px; backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px); box-shadow: 0 12px 40px rgba(0,0,0,.28);
+  }
+  .bottom-nav a { min-height: 46px; gap: 3px; font-size: .62rem; border-radius: 12px; }
+  .bottom-nav svg { width: 20px; height: 20px; }
+
+  /* Keep chat usable above the mobile navigation. */
+  .chat-page-grid { min-width: 0; }
+  .chat-panel, .chat-body, .chat-input-area { min-width: 0; }
+  .chat-body { max-height: none; min-height: calc(100dvh - 250px); padding-bottom: 18px; }
+  .msg { max-width: 94%; word-break: break-word; overflow-wrap: anywhere; }
+  .msg.user { margin-left: auto; }
+  .chat-input-area { position: sticky; bottom: 0; z-index: 20; padding: 8px; }
+  .chat-input-area textarea { max-height: 120px; font-size: 16px; }
+  .chat-input-area button { min-width: 44px; min-height: 44px; }
+
+  /* Cards/forms become one-column and avoid horizontal overflow. */
+  .card, .panel, .settings-card, .conv-card, .document-card { max-width: 100%; }
+  .settings-row, .form-row { flex-wrap: wrap; }
+  .settings-row > *, .form-row > * { min-width: 0; max-width: 100%; }
+  table { max-width: 100%; }
+  pre { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .answer-table-wrap { max-width: 100%; -webkit-overflow-scrolling: touch; }
+}
+
+@media (max-width: 520px) {
+  .topbar { padding: 8px 9px; }
+  .brand-logo-mark { width: 30px; height: 30px; }
+  .brand-gradient { font-size: .95rem; }
+  .topbar .theme-toggle-btn { display: none; }
+  .layout { padding-left: 6px !important; padding-right: 6px !important; }
+  .page-content { padding: 0 !important; }
+  .chat-body { min-height: calc(100dvh - 235px); }
+  .msg { max-width: 96%; }
+  .msg.user { border-radius: 16px 16px 5px 16px; }
+  .msg.bot { border-radius: 16px 16px 16px 5px; }
+  .answer-content { font-size: .92rem; }
+  .answer-content h1 { font-size: 1.35rem; }
+  .answer-content h2 { font-size: 1.18rem; }
+  .answer-content h3 { font-size: 1.05rem; }
+  .answer-step { grid-template-columns: 25px 1fr !important; }
+  .answer-table { min-width: 330px; font-size: .78rem; }
+  .bottom-nav { left: 5px; right: 5px; border-radius: 16px; }
+  .bottom-nav a { min-height: 44px; font-size: .58rem; }
+}
+
+@media (max-width: 360px) {
+  .brand-gradient { font-size: .82rem; }
+  .hamburger { width: 38px; }
+  .avatar-ring { width: 36px !important; height: 36px !important; }
+  .bottom-nav a span { font-size: .54rem; }
+}
