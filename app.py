@@ -366,30 +366,6 @@ def compute_stats(user_id):
 
 
 # ---------------------------------------------------------------------------
-# Active conversation/session helpers
-# ---------------------------------------------------------------------------
-def create_active_conversation(user_id, title="New Conversation"):
-    """Create exactly one blank conversation for the current login/session."""
-    conv = Conversation(user_id=user_id, title=title)
-    db.session.add(conv)
-    db.session.commit()
-    session["active_conversation_id"] = conv.id
-    return conv
-
-
-def get_active_conversation(user_id):
-    raw = session.get("active_conversation_id")
-    if raw:
-        try:
-            conv = Conversation.query.filter_by(id=int(raw), user_id=user_id).first()
-            if conv:
-                return conv
-        except (TypeError, ValueError):
-            pass
-    return create_active_conversation(user_id)
-
-
-# ---------------------------------------------------------------------------
 # Auth
 # ---------------------------------------------------------------------------
 @app.route("/")
@@ -408,7 +384,7 @@ def register():
         if User.query.filter((User.username == username) | (User.email == email)).first():
             flash("Username or email already registered.", "error"); return redirect(url_for("register"))
         user = User(username=username, email=email, role="user", tenant_id=f"tenant-{uuid.uuid4().hex[:10]}")
-        user.set_password(password); db.session.add(user); db.session.commit(); login_user(user); session.pop("active_conversation_id", None); create_active_conversation(user.id); audit("register", {"username": username}, user.id)
+        user.set_password(password); db.session.add(user); db.session.commit(); login_user(user); audit("register", {"username": username}, user.id)
         return redirect(url_for("dashboard"))
     return render_template("register.html")
 
@@ -419,7 +395,7 @@ def login():
         identifier = request.form.get("identifier", "").strip(); password = request.form.get("password", ""); remember = bool(request.form.get("remember"))
         user = User.query.filter((User.username == identifier) | (User.email == identifier.lower())).first()
         if user and user.check_password(password):
-            login_user(user, remember=remember); session.pop("active_conversation_id", None); create_active_conversation(user.id); audit("login", {"method": "password"}, user.id); return redirect(url_for("dashboard"))
+            login_user(user, remember=remember); audit("login", {"method": "password"}, user.id); return redirect(url_for("dashboard"))
         flash("Invalid username/email or password.", "error"); return redirect(url_for("welcome"))
     return redirect(url_for("welcome"))
 
@@ -427,7 +403,7 @@ def login():
 @app.route("/logout")
 @login_required
 def logout():
-    audit("logout", user_id=current_user.id); session.pop("active_conversation_id", None); logout_user(); return redirect(url_for("welcome"))
+    audit("logout", user_id=current_user.id); logout_user(); return redirect(url_for("welcome"))
 
 
 # ---------------------------------------------------------------------------
@@ -437,11 +413,7 @@ def logout():
 @login_required
 def dashboard():
     raw = request.args.get("conv"); load_conv = None
-    if raw and raw.isdigit() and Conversation.query.filter_by(id=int(raw), user_id=current_user.id).first():
-        load_conv = int(raw)
-        session["active_conversation_id"] = load_conv
-    else:
-        load_conv = get_active_conversation(current_user.id).id
+    if raw and raw.isdigit() and Conversation.query.filter_by(id=int(raw), user_id=current_user.id).first(): load_conv = int(raw)
     return render_template("dashboard.html", stats=compute_stats(current_user.id), active="dashboard", groq_model=GROQ_MODEL, groq_configured=bool(os.environ.get("GROQ_API_KEY")), load_conv=load_conv)
 
 
@@ -608,21 +580,6 @@ def upload_profile_photo():
 
     audit("profile_photo_update", {"filename": filename}, current_user.id)
     return jsonify({"success": True, "url": url_for("profile_photo", filename=filename)})
-
-
-@app.route("/api/settings/profile-photo", methods=["DELETE"])
-@login_required
-def remove_profile_photo():
-    old = current_user.profile_photo or ""
-    current_user.profile_photo = ""
-    current_user.profile_photo_data = ""
-    current_user.profile_photo_mime = ""
-    db.session.commit()
-    if old and old.startswith(f"profile_{current_user.id}_"):
-        try: os.remove(os.path.join(UPLOAD_FOLDER, old))
-        except OSError: pass
-    audit("profile_photo_remove", {"filename": old}, current_user.id)
-    return jsonify({"success": True, "use_letter": True})
 
 
 @app.route("/api/settings/change-password", methods=["POST"])
@@ -832,7 +789,7 @@ def is_smalltalk(text_value):
     normalized = _normalized_chat_text(text_value)
     phrases = {
         "hi","hai","hello","hey","vanakkam","வணக்கம்","good morning","good evening",
-        "good night","thanks","thank you","nandri","bye","goodbye","see you",
+        "good night","assalamualaikum","assalamu alaikum","assalam o alaikum","thanks","thank you","nandri","bye","goodbye","see you",
         "ok","okay","super","nice","great","enna panura","enna panre","enna pannura",
         "enna panuringa","enna panreenga","what are you doing","what r u doing","how are you","how r u",
         "epdi iruka","epdi irukinga","epdi irukku","saptiya","saptingala","saaptiya","saaptingala",
@@ -843,7 +800,7 @@ def is_smalltalk(text_value):
     if normalized in phrases:
         return True
     # Common Tamil-script and punctuation-heavy greetings should never go to web search.
-    if normalized in {"வணக்கம்", "ஹாய்", "ஹலோ", "நன்றி", "பை"}:
+    if normalized in {"வணக்கம்", "ஹாய்", "ஹலோ", "நன்றி", "பை", "அஸ்ஸலாமு அலைக்கும்"}:
         return True
     patterns = [
         r"^(enna|nee enna|neenga enna)\s+(panra|panre|pannura|panuringa|pannitu iruka|pannitu irukinga)",
@@ -958,9 +915,7 @@ LANGUAGE_INSTRUCTIONS={
 @app.route("/api/conversations",methods=["POST"])
 @login_required
 def new_conversation():
-    # Explicit New Chat always creates a real, empty conversation.
-    c = create_active_conversation(current_user.id)
-    return jsonify({"success": True, "conversation_id": c.id, "title": c.title})
+    c=Conversation(user_id=current_user.id,title="New Conversation"); db.session.add(c); db.session.commit(); return jsonify({"success":True,"conversation_id":c.id})
 
 
 @app.route("/api/conversations/<int:conv_id>/messages")
@@ -1028,6 +983,8 @@ def offline_conversational_fallback(user_message, language):
     """Useful no-provider response for common conversational/intention patterns."""
     n=_normalized_chat_text(user_message)
     tanglish=(language in {"Auto","Tanglish"} and bool(re.search(r"\b(ah|na|pannu|panra|panre|pannura|panuringa|sollu|solu|iruka|irukku|epdi|enna|kudu|venum|puriyala|crt)\b", n)))
+    if re.search(r"\bassalam(?:u)?\s+(?:alaikum|alaikum)\b|\bassalam\s*o\s*alaikum\b", n) or n == "assalamualaikum":
+        return "Wa alaikum assalam! 🌷😊 RAGENIUS here. Enna help venum sollunga!" if tanglish or language in {"Auto","Tanglish"} else "Wa alaikum assalam! 🌷😊 I’m RAGENIUS. How can I help you today?"
     if re.search(r"\b(good morning|good mrng)\b", n):
         return "Good morning! ☀️😊 Have a wonderful day! Enna help venumo sollunga, naan inga iruken! 💙" if tanglish else "Good morning! ☀️😊 Have a wonderful day! How can I help you today?"
     if re.search(r"\b(good evening|good eve)\b", n):
@@ -1339,10 +1296,8 @@ def chat():
     # message follows whatever language the user naturally uses.
     response_language = explicit_language or (detected_language if language == "Auto" else language)
     auto_follow_after_turn = bool(explicit_language)
-    conv = Conversation.query.filter_by(id=conv_id, user_id=current_user.id).first() if conv_id else None
-    if not conv:
-        conv = get_active_conversation(current_user.id)
-    session["active_conversation_id"] = conv.id
+    conv=Conversation.query.filter_by(id=conv_id,user_id=current_user.id).first() if conv_id else None
+    if not conv: conv=Conversation(user_id=current_user.id,title=user_message[:55]); db.session.add(conv); db.session.flush()
     if conv.title=="New Conversation" or not conv.title: conv.title=user_message[:55]
     db.session.add(Message(conversation_id=conv.id,role="user",content=user_message)); db.session.commit()
 
@@ -1446,22 +1401,20 @@ def chat():
                     if language not in {"Tamil", "Tanglish"} else
                     "Naan help panna ready-ah iruken 💙 Open-domain full AI answers-ku valid Groq API key connect panni app restart pannunga.")
         except Exception as exc:
-            # Never show raw provider/SDK errors to the user. Use grounded/local
-            # fallbacks where possible and keep the chat usable for a viva demo.
-            provider_error = "AI provider fallback used"
+            # Do not expose raw provider failures to the user. Keep the chat usable
+            # with grounded/offline fallbacks and log the real exception server-side.
+            provider_error = str(exc)[:500]
+            app.logger.exception("Groq provider request failed")
             if meaningful:
                 answer = fallback_grounded_answer(user_message, meaningful, response_language)
             elif web_results:
                 answer = fallback_web_answer(user_message, web_results, response_language)
             else:
-                answer = offline_conversational_fallback(user_message, response_language) or meaning_fallback(user_message, response_language)
-                if not answer:
-                    if response_language == "Tamil":
-                        answer = "இப்போது AI service-க்கு connection கிடைக்கவில்லை. தயவுசெய்து சிறிது நேரம் கழித்து மீண்டும் கேளுங்கள்."
-                    elif response_language == "Tanglish":
-                        answer = "Ippo AI service-ku connection kidaikkala. Konjam neram kazhichu same question-ah try pannunga."
-                    else:
-                        answer = "The AI service is temporarily unavailable. Please try the same question again in a moment."
+                answer = (offline_conversational_fallback(user_message, response_language)
+                          or meaning_fallback(user_message, response_language)
+                          or ("I’m having trouble reaching the AI service right now. Please try that message again in a moment."
+                              if response_language == "English" else
+                              "AI service connect aagala right now. Konjam nerathula same message-a try pannunga."))
         top_score = max([s.get("score", 0) for s in sources if s.get("type") == "pdf"] or [0])
         confidence = round(min(99.0, max(35.0, top_score*100 if sources else 62.0)), 1)
         if provider_error and meaningful:
@@ -1477,30 +1430,34 @@ def chat():
     return jsonify({"success":True,"conversation_id":conv.id,"title":conv.title,"answer":answer,"sources":sources,"assistant_message_id":assistant.id,"confidence":confidence,"evaluation":evaluation,"language":{"requested":language,"detected":detected_language,"response":response_language,"explicit":explicit_language,"auto_follow_after_turn":auto_follow_after_turn},"retrieval":{"variants":meta.get("variants",[]),"strategy":meta.get("strategy"),"query_intent":meta.get("query_intent",[]),"topic_query":meta.get("topic_query",""),"retrieval_ms":round(retrieval_ms,1) if not skip_log else 0,"llm_ms":round(llm_ms,1) if not skip_log else 0}})
 
 
-@app.route("/api/conversations/<int:conv_id>",methods=["DELETE"])
+@app.route("/api/conversations/<int:conv_id>", methods=["DELETE"])
 @login_required
 def delete_conversation(conv_id):
-    c = Conversation.query.filter_by(id=conv_id, user_id=current_user.id).first()
-    if not c:
-        return jsonify({"success": False, "error": "Conversation not found."}), 404
+    """Delete one conversation and every dependent record safely.
+
+    Messages are referenced by feedback/evaluation rows, while conversations
+    are referenced by retrieval events. Removing those dependent rows first
+    prevents foreign-key errors from making the UI look like the delete did
+    nothing.
+    """
+    c = Conversation.query.filter_by(id=conv_id, user_id=current_user.id).first_or_404()
+    message_ids = [m.id for m in Message.query.filter_by(conversation_id=c.id).all()]
+
     try:
-        # Delete dependent records explicitly so this also works on SQLite
-        # deployments where foreign-key cascade settings vary.
-        message_ids = [m.id for m in Message.query.filter_by(conversation_id=c.id).all()]
         if message_ids:
-            Feedback.query.filter(Feedback.message_id.in_(message_ids)).delete(synchronize_session=False)
             Evaluation.query.filter(Evaluation.message_id.in_(message_ids)).delete(synchronize_session=False)
+            Feedback.query.filter(Feedback.message_id.in_(message_ids)).delete(synchronize_session=False)
+            Message.query.filter(Message.id.in_(message_ids)).delete(synchronize_session=False)
+
         RetrievalEvent.query.filter_by(conversation_id=c.id).delete(synchronize_session=False)
-        Message.query.filter_by(conversation_id=c.id).delete(synchronize_session=False)
         db.session.delete(c)
         db.session.commit()
-        if session.get("active_conversation_id") == c.id:
-            session.pop("active_conversation_id", None)
         audit("conversation_delete", {"conversation_id": conv_id}, current_user.id)
         return jsonify({"success": True, "deleted_conversation_id": conv_id})
-    except Exception:
+    except Exception as exc:
         db.session.rollback()
-        return jsonify({"success": False, "error": "Conversation could not be deleted. Please try again."}), 500
+        app.logger.exception("Conversation deletion failed for %s", conv_id)
+        return jsonify({"success": False, "error": "Could not delete the conversation. Please try again."}), 500
 
 
 @app.route("/api/feedback",methods=["POST"])
