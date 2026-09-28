@@ -289,57 +289,13 @@ body.light-mode .premium-welcome .premium-hero h1{-webkit-text-fill-color:transp
 body.light-mode .premium-welcome .premium-logo strong,body.light-mode .premium-welcome .login-brand-mark strong{background:linear-gradient(90deg,#0a9bd6,#7a3cf0,#d61fb8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 @media(max-width:800px){body.light-mode .premium-topbar{background:#fff}.premium-welcome{overflow-y:auto}}
 
-/* ================= FINAL UX FIXES ================= */
-/* The navigation drawer must not blur the entire application. It may dim the
-   page slightly, but the underlying content stays crisp and interactive. */
-.nav-backdrop{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(3,5,18,.24)!important}
-body.light-mode .nav-backdrop{background:rgba(20,25,60,.10)!important}
-.sidebar{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-.nav-item{position:relative;z-index:1}
 
-/* Login is intentionally scrollable when the card is taller than the viewport.
-   The previous shell-level overflow:hidden clipped the lower half of the form. */
-html:has(.login-shell), body:has(.login-shell){height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto!important}
-.login-shell{min-height:100svh!important;height:auto!important;overflow:visible!important;align-items:start}
-.login-hero{min-height:100svh!important;height:auto!important}
-.login-panel{align-self:start;min-height:100svh;padding-bottom:64px}
-@media (max-width:1100px){
-  .login-shell{grid-template-columns:1fr;overflow:visible!important}
-  .login-hero{min-height:620px!important}
-  .login-panel{min-height:0;padding-bottom:56px}
-}
-@media (max-width:650px){
-  .login-hero{min-height:590px!important}
-  .login-panel{padding-bottom:40px}
-}
-
-/* ============================================================
-   NAVIGATION CLICK FIX
-   Keep the drawer above the backdrop and make every link clickable.
-   ============================================================ */
-.sidebar,
-.sidebar * {
-  pointer-events: auto !important;
-}
-.sidebar {
-  z-index: 200 !important;
-}
-.nav-backdrop {
-  z-index: 100 !important;
-  pointer-events: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-body.nav-open .nav-backdrop {
-  pointer-events: none !important;
-}
-.nav-item {
-  position: relative !important;
-  z-index: 201 !important;
-  pointer-events: auto !important;
-  cursor: pointer !important;
-  touch-action: manipulation;
-}
-.nav-item * {
-  pointer-events: none !important;
+/* Prevent a false "New Conversation" flash while an existing chat is restored. */
+.conversation-loading {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(238,240,255,.65);
+  font-size: .9rem;
 }
