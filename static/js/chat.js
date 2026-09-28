@@ -1,6 +1,23 @@
 // RAGENIUS Chat — text chat, PDF grounding, best-effort web sources, voice input and read-aloud.
 (function () {
-  let currentConversationId = (typeof window.RAGENIUS_LOAD_CONVERSATION_ID !== 'undefined') ? window.RAGENIUS_LOAD_CONVERSATION_ID : null;
+  // Keep the active conversation across page navigation. A new chat is only
+  // created when the user explicitly presses "New Chat".
+  const SAVED_CONVERSATION_KEY = 'ragenius_current_conversation_id';
+  const urlConversationId = (typeof window.RAGENIUS_LOAD_CONVERSATION_ID !== 'undefined') ? window.RAGENIUS_LOAD_CONVERSATION_ID : null;
+  let currentConversationId = urlConversationId || localStorage.getItem(SAVED_CONVERSATION_KEY) || null;
+
+  function saveCurrentConversation() {
+    if (currentConversationId !== null && currentConversationId !== undefined && String(currentConversationId) !== '') {
+      localStorage.setItem(SAVED_CONVERSATION_KEY, String(currentConversationId));
+    } else {
+      localStorage.removeItem(SAVED_CONVERSATION_KEY);
+    }
+    const nav = document.getElementById('chatNavLink');
+    if (nav) nav.href = currentConversationId ? `/dashboard?conv=${encodeURIComponent(currentConversationId)}` : '/dashboard';
+  }
+
+  // If the server explicitly opened a conversation, make it the active one.
+  if (urlConversationId) saveCurrentConversation();
   let currentLanguage = localStorage.getItem('ragenius_default_lang') || 'Auto';
   let isRecording = false;
   let recognition = null;
@@ -337,6 +354,7 @@
       const data = await res.json(); await statusPromise; hideTyping(); setAIStatus('', false);
       if (!data.success) { showToast(data.error || 'Something went wrong', 'error'); return; }
       currentConversationId = data.conversation_id;
+      saveCurrentConversation();
       if (data.language?.auto_follow_after_turn) {
         currentLanguage = 'Auto';
         localStorage.setItem('ragenius_default_lang', 'Auto');
@@ -368,6 +386,7 @@
 
   function startNewChat() {
     currentConversationId = null;
+    saveCurrentConversation();
     history.replaceState({}, '', '/dashboard');
     if (chatTitle) chatTitle.textContent = 'New Conversation';
     chatBody.innerHTML = '';
@@ -388,12 +407,18 @@
     } catch { showToast('Could not delete conversation', 'error'); }
   });
 
-  // History -> Dashboard loading. This fixes the old-chat/new-chat issue.
+  // Restore the same conversation after visiting another page.
   if (currentConversationId) {
+    saveCurrentConversation();
     fetch(`/api/conversations/${currentConversationId}/messages`)
       .then(r => r.json())
       .then(data => {
-        if (!data.success) return;
+        if (!data.success) {
+          // Conversation was deleted or is no longer available.
+          currentConversationId = null;
+          saveCurrentConversation();
+          return;
+        }
         if (chatTitle) chatTitle.textContent = data.title || 'Conversation';
         chatBody.innerHTML = '';
         data.messages.forEach(m => appendMessage(m.role, m.content, m.sources, m.created_at, m.id));
