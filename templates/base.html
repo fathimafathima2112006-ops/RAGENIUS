@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<style id="ragenius-anti-fouc">html.ragenius-preload body{visibility:hidden}html.ragenius-ready body{visibility:visible}</style>
+<script>document.documentElement.classList.add("ragenius-preload");</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{% block title %}RAGENIUS{% endblock %}</title>
@@ -37,5 +39,6 @@
   }
 })();
 </script>
+<script>document.documentElement.classList.remove("ragenius-preload");document.documentElement.classList.add("ragenius-ready");</script>
 </body>
 </html>
