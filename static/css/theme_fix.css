@@ -1,0 +1,345 @@
+/* RAGENIUS — theme contrast fix, profile avatar, sidebar icons, mobile app layout */
+
+/* ---------- DARK: readable text on every panel ---------- */
+:root{--text-main:#f2f4ff;--text-dim:#b4bad9}
+html[data-theme="dark"] .glass-panel,
+html[data-theme="dark"] .panel-box{background:rgba(14,16,40,.86)}
+html[data-theme="dark"] .msg.bot{background:rgba(22,25,58,.92);color:var(--text-main)}
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder{color:#8f96bd}
+
+/* ---------- LIGHT: dark text everywhere, solid panels ---------- */
+body.light-mode{--text-main:#12152b;--text-dim:#454e6b;--border-glow:rgba(70,58,190,.30);color:var(--text-main)}
+body.light-mode .bg-orbs,body.light-mode .grid-overlay{opacity:.25}
+body.light-mode .glass-panel,body.light-mode .panel-box{background:#fff;border-color:rgba(70,58,190,.20);box-shadow:0 4px 18px rgba(40,50,120,.08);color:var(--text-main)}
+body.light-mode h1,body.light-mode h2,body.light-mode h3,body.light-mode h4,
+body.light-mode p,body.light-mode label,body.light-mode td,body.light-mode th,
+body.light-mode li,body.light-mode strong{color:var(--text-main)}
+body.light-mode small,body.light-mode .page-header p{color:var(--text-dim)}
+body.light-mode .topbar{background:rgba(255,255,255,.95);border-bottom:1px solid rgba(70,58,190,.15)}
+body.light-mode .brand-gradient{background:linear-gradient(90deg,#2a5bff,#7a3cf0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+body.light-mode .sidebar{background:transparent}
+body.light-mode .nav-item{color:#2a3150}
+body.light-mode .nav-item:hover{background:rgba(70,58,190,.08)}
+body.light-mode .nav-item.active{background:linear-gradient(90deg,rgba(34,232,255,.22),rgba(122,60,240,.18));color:#0b0f24;font-weight:600}
+body.light-mode .side-section-label{color:#5a6488}
+body.light-mode .msg.bot{background:#fff;color:#12152b;border:1px solid rgba(70,58,190,.22)}
+body.light-mode .msg.bot .time,body.light-mode .msg-actions,body.light-mode .msg-actions button{color:#454e6b}
+body.light-mode .msg.user{background:linear-gradient(135deg,#6d3df0,#2f63ff);color:#fff}
+body.light-mode .msg.user .time{color:rgba(255,255,255,.85)}
+body.light-mode input,body.light-mode textarea,body.light-mode select{background:#fff;color:#12152b;border:1px solid rgba(70,58,190,.35)}
+body.light-mode input::placeholder,body.light-mode textarea::placeholder{color:#6b7391}
+body.light-mode .chat-input-row input{background:#fff;color:#12152b}
+body.light-mode .footer-bar{color:#454e6b;background:rgba(255,255,255,.9)}
+body.light-mode .badge,body.light-mode .badge-free,body.light-mode .badge-role{color:#12152b}
+body.light-mode table{color:#12152b}
+body.light-mode a:not(.nav-item):not(.icon-btn):not(.btn){color:#3a3fd6}
+body.light-mode .icon-btn{color:#12152b;border-color:rgba(70,58,190,.3);background:#fff}
+body.light-mode .user-chip .meta small{color:#0f8a5f}
+body.light-mode .chat-item:hover{background:rgba(70,58,190,.07)}
+body.light-mode .theme-choice-btn{color:#12152b}
+body.light-mode .theme-choice-btn.active{background:linear-gradient(90deg,#22e8ff,#a855f7);color:#0b0f24}
+
+/* ---------- Sidebar SVG icons ---------- */
+.nav-item .ic{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;font-size:0;flex-shrink:0}
+.nav-item .ic svg{width:19px;height:19px}
+.nav-item.active .ic{background:linear-gradient(135deg,var(--cyan),var(--purple));color:#fff}
+
+/* ---------- Topbar profile avatar (WhatsApp style) ---------- */
+.avatar-ring{width:44px;height:44px;border-radius:50%;padding:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#25d366,#22e8ff,#a855f7);box-shadow:0 0 0 2px rgba(255,255,255,.08),0 4px 14px rgba(37,211,102,.35);overflow:hidden;transition:transform .2s}
+.avatar-ring:hover{transform:scale(1.07)}
+.avatar-ring .header-profile-photo{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;border:2px solid var(--bg-panel-solid,#12142e)}
+.avatar-ring .avatar-letter{display:flex;align-items:center;justify-content:center;background:#0f1128;color:#2ee6a6;font-weight:800;font-size:1.05rem}
+body.light-mode .avatar-ring .avatar-letter{background:#eafff5;color:#0a7a52}
+.user-chip .meta-name{font-weight:600;line-height:1.2}
+#avatarContainer{width:76px!important;height:76px!important}
+.profile-avatar-wrapper{width:76px!important;height:76px!important}
+#avatarContainer img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+
+/* ---------- Bottom nav (phones only) ---------- */
+.bottom-nav{display:none}
+
+@media (max-width:768px){
+  body{padding-bottom:calc(68px + env(safe-area-inset-bottom))}
+  .footer-bar{display:none}
+  .grid-overlay{display:none}
+  .topbar{position:sticky;top:0;z-index:60;padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top));gap:8px;backdrop-filter:blur(14px)}
+  .topbar .brand{font-size:1rem}
+  .topbar .brand-logo-mark{width:30px;height:30px}
+  .topbar .brand small{display:none}
+  .avatar-ring{width:38px;height:38px}
+  .user-chip .meta,.user-chip>a.icon-btn{display:none}
+  .layout,.layout.sidebar-collapsed{padding:10px 10px 6px;gap:10px}
+  .sidebar{top:calc(58px + env(safe-area-inset-top));border-radius:18px}
+  .page-header h2{font-size:1.2rem}
+  .glass-panel,.panel-box{border-radius:18px}
+  .settings-grid{grid-template-columns:1fr}
+
+  /* chat feels like a phone messenger */
+  .chat-panel-tall{min-height:0;height:calc(100dvh - 190px - env(safe-area-inset-bottom))}
+  .chat-body{padding:12px;min-height:0}
+  .msg{max-width:90%;font-size:.92rem;padding:10px 13px;border-radius:18px}
+  .msg-actions{flex-wrap:wrap;gap:8px}
+  .chat-input-row{padding:10px;gap:6px;position:sticky;bottom:0;background:var(--bg-panel-solid)}
+  .chat-input-row input{font-size:16px;padding:12px 14px}
+  .chat-input-row .side-btn{width:40px;height:40px}
+  .chat-input-row .send-btn{width:44px;height:44px}
+  .right-col{display:none}
+  table{display:block;overflow-x:auto}
+  input,select,textarea{font-size:16px}
+
+  .bottom-nav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:70;justify-content:space-around;
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:var(--bg-panel-solid,#12142e);
+    border-top:1px solid var(--border-glow);box-shadow:0 -8px 24px rgba(0,0,0,.25)}
+  .bottom-nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:12px;
+    color:var(--text-dim);text-decoration:none;font-size:.66rem;font-weight:600}
+  .bottom-nav svg{width:22px;height:22px}
+  .bottom-nav a.active{color:var(--cyan);background:rgba(34,232,255,.10)}
+  body.light-mode .bottom-nav{background:#fff}
+  body.light-mode .bottom-nav a.active{color:#5a3cf0;background:rgba(90,60,240,.10)}
+}
+@media (max-width:380px){.bottom-nav a span{font-size:.6rem}.topbar .brand-gradient{font-size:.95rem}}
+
+/* ================= Chat upgrades ================= */
+.msg-actions button{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;border:1px solid var(--border-glow);background:rgba(255,255,255,.04);cursor:pointer;font-size:.76rem;transition:.15s}
+.msg-actions button svg{width:15px;height:15px;flex-shrink:0}
+.msg-actions button:hover{color:var(--cyan);border-color:var(--cyan);transform:translateY(-1px)}
+.msg-actions .read-aloud-btn.speaking{color:#fff;background:linear-gradient(135deg,var(--purple),var(--blue));border-color:transparent}
+.msg-actions .feedback-btn.selected{color:#fff;background:var(--success);border-color:var(--success)}
+.msg-actions .feedback-btn.down.selected{background:var(--danger);border-color:var(--danger)}
+body.light-mode .msg-actions button{background:#f3f5ff;border-color:rgba(70,58,190,.25);color:#2a3150}
+body.light-mode .msg-actions button:hover{color:#4b2fe0;border-color:#4b2fe0}
+.tool-ic{cursor:pointer;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid var(--border-glow)}
+.tool-ic:hover{color:var(--cyan);border-color:var(--cyan)}
+.tool-ic svg,.chat-input-row .side-btn svg,.chat-input-row .send-btn svg,.chat-head .bot-mini svg{width:19px;height:19px}
+.chat-head .bot-mini{color:var(--cyan)}
+.suggest-row{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 4px}
+.suggest-chip{padding:8px 14px;border-radius:999px;border:1px solid var(--border-glow);background:rgba(34,232,255,.07);color:var(--text-main);font-size:.8rem;cursor:pointer;transition:.15s}
+.suggest-chip:hover{background:linear-gradient(135deg,var(--cyan),var(--purple));color:#fff;border-color:transparent}
+body.light-mode .suggest-chip{background:#fff;color:#2a3150}
+body.light-mode .suggest-chip:hover{color:#fff}
+.scroll-down-btn{position:absolute;right:18px;bottom:84px;width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;color:#fff;
+  background:linear-gradient(135deg,var(--purple),var(--blue));box-shadow:0 6px 18px rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:5}
+.scroll-down-btn.show{display:flex}.scroll-down-btn svg{width:20px;height:20px}
+.code-copy-btn{position:absolute;top:6px;right:6px;padding:3px 9px;font-size:.68rem;border-radius:8px;border:1px solid var(--border-glow);background:rgba(0,0,0,.35);color:#fff;cursor:pointer}
+.answer-content pre{padding-top:28px}
+body.light-mode .answer-content pre{background:#f1f3ff;color:#12152b;border:1px solid rgba(70,58,190,.2)}
+body.light-mode .code-copy-btn{background:#fff;color:#12152b}
+
+/* ================= Documents: clear filter bar ================= */
+.doc-filters{display:inline-flex;gap:4px;padding:4px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid var(--border-glow)}
+.doc-filter{border:none!important;background:transparent!important;color:var(--text-main)!important;padding:8px 18px!important;border-radius:10px!important;font-weight:600;font-size:.85rem;cursor:pointer;transition:.15s}
+.doc-filter:hover{background:rgba(34,232,255,.12)!important}
+.doc-filter.active{background:linear-gradient(135deg,var(--cyan),var(--purple))!important;color:#fff!important;box-shadow:0 4px 12px rgba(120,90,255,.35)}
+.doc-count,.doc-count b{color:var(--text-main)!important}
+body.light-mode .doc-filters{background:#eef0ff;border-color:rgba(70,58,190,.3)}
+body.light-mode .doc-filter{color:#1a2040!important}
+body.light-mode .doc-filter.active{color:#fff!important}
+body.light-mode .doc-count,body.light-mode .doc-count b{color:#1a2040!important}
+body.light-mode .docs-commandbar .search-mini,body.light-mode .search-mini{background:#fff;border:1px solid rgba(70,58,190,.3)}
+body.light-mode .search-mini input{color:#12152b}
+.docs-commandbar{flex-wrap:wrap}
+
+/* ================= Login / Register / Welcome: theme toggle + light theme ================= */
+.auth-theme-toggle{position:fixed;top:16px;right:16px;z-index:100;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:1.15rem;
+  border:1px solid var(--border-glow);background:rgba(15,18,45,.75);color:#fff;backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+body.light-mode .auth-theme-toggle{background:#fff;color:#12152b;border-color:rgba(70,58,190,.35)}
+
+body.light-mode .login-shell{background:radial-gradient(circle at 15% 15%,rgba(34,232,255,.30),transparent 32%),radial-gradient(circle at 85% 85%,rgba(168,85,247,.22),transparent 34%),linear-gradient(135deg,#f6f9ff 0%,#eaf0ff 55%,#f7f0ff 100%)}
+body.light-mode .login-shell:before{background:rgba(0,183,255,.15)}
+body.light-mode .login-shell:after{background:rgba(120,70,255,.13)}
+body.light-mode .login-brand small,body.light-mode .card-brand small{color:#4a5478!important}
+body.light-mode .login-brand-icon,body.light-mode .card-brand-icon{background:#fff;border-color:rgba(70,58,190,.35);color:#4b2fe0;box-shadow:0 6px 18px rgba(70,58,190,.15)}
+body.light-mode .login-brand strong,body.light-mode .card-brand strong{background:linear-gradient(90deg,#1a5cff,#7a3cf0 60%,#d61fb8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+body.light-mode .welcome-kicker{color:#4b2fe0!important}
+body.light-mode .hero-copy h1,body.light-mode .hero-copy h1 span{color:#0d1230!important;-webkit-text-fill-color:#0d1230!important;text-shadow:none!important;background:none!important}
+body.light-mode .hero-copy h2{color:#1a2040!important}
+body.light-mode .hero-copy h2 em{background:linear-gradient(90deg,#1a5cff,#d61fb8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+body.light-mode .hero-copy p{color:#3a4468!important}
+body.light-mode .hero-features strong{color:#0d1230!important}
+body.light-mode .hero-features small,body.light-mode .hero-motto,body.light-mode .hero-motto span{color:#4a5478!important}
+body.light-mode .hero-features b{background:#fff;color:#4b2fe0;border-color:rgba(70,58,190,.3)}
+body.light-mode .doc-bubble{background:#fff!important;color:#2a3150!important;border-color:rgba(70,58,190,.3)!important;box-shadow:0 8px 20px rgba(70,58,190,.15)!important}
+body.light-mode .login-card{background:#fff;border:1px solid rgba(70,58,190,.25);box-shadow:0 24px 70px rgba(50,60,140,.18)}
+body.light-mode .login-card:before{opacity:.35}
+body.light-mode .login-card h3{color:#0d1230}
+body.light-mode .login-subtitle,body.light-mode .login-options,body.light-mode .login-options span,body.light-mode .login-bottom{color:#3a4468!important}
+body.light-mode .login-options a,body.light-mode .login-bottom a{color:#3a2fe0!important;font-weight:600}
+body.light-mode .login-field{background:#f4f6ff!important;border:1px solid rgba(70,58,190,.3)!important}
+body.light-mode .login-field span,body.light-mode .login-field button{color:#4b2fe0!important}
+body.light-mode .login-field input{background:transparent!important;color:#12152b!important;border:none!important}
+body.light-mode .login-field:focus-within{border-color:#4b2fe0!important;box-shadow:0 0 0 3px rgba(75,47,224,.15)}
+body.light-mode .login-main-btn{color:#fff}
+body.light-mode .login-or b{color:#5a6488!important}
+body.light-mode .login-or span{background:rgba(70,58,190,.2)!important}
+body.light-mode .login-card .social-btn,body.light-mode .welcome-social-btn{background:#fff!important;color:#12152b!important;border:1px solid rgba(70,58,190,.3)!important}
+body.light-mode .login-card .social-btn:hover{background:#f4f6ff!important}
+body.light-mode .oauth-note,body.light-mode .login-trust span{color:#4a5478!important}
+body.light-mode .login-flashes div{color:#8a1230;background:#ffe9ee}
+/* register + welcome cards */
+body.light-mode .welcome-wrap .glass-panel,body.light-mode .welcome-wrap form{color:#12152b}
+body.light-mode .welcome-brand h1{color:#0d1230}
+body.light-mode .hero-headline{color:#0d1230}
+
+/* ============================================================
+   FIXED APP LAYOUT + DRAWER SIDEBAR (all screen sizes)
+   Page never scrolls; only the chat list (or page content) scrolls.
+   ============================================================ */
+html,body{height:100%;overflow:hidden}
+.app-shell{height:100vh;height:100dvh;min-height:0!important;overflow:hidden}
+.topbar{flex:0 0 auto;position:relative;z-index:95}
+.footer-bar,.bottom-nav{display:none!important}
+.layout,.layout.sidebar-collapsed{display:block!important;flex:1 1 auto;min-height:0;padding:0!important;position:relative;overflow:hidden}
+.page-content{height:100%;overflow-y:auto;overflow-x:hidden;padding:16px 22px 24px;-webkit-overflow-scrolling:touch}
+.page-content:has(.chat-only){overflow:hidden;padding:12px 16px}
+
+/* drawer */
+.sidebar,.layout.sidebar-collapsed .sidebar{position:fixed!important;top:var(--topbar-h,64px)!important;left:0;bottom:0;width:min(290px,84vw);z-index:90;
+  padding:14px 12px 24px;overflow-y:auto;gap:4px;transform:translateX(-104%);visibility:hidden;transition:transform .28s ease,visibility .28s;
+  background:var(--bg-panel-solid,#0f1230);border-right:1px solid var(--border-glow);box-shadow:8px 0 40px rgba(0,0,0,.45);border-radius:0 18px 18px 0}
+body.nav-open .sidebar{transform:none;visibility:visible}
+.layout.sidebar-collapsed .sidebar .nav-item span:not(.ic){display:inline!important}
+.layout.sidebar-collapsed .side-section-label{display:block!important}
+.layout.sidebar-collapsed .nav-item{justify-content:flex-start!important}
+.nav-backdrop{position:fixed;inset:0;top:var(--topbar-h,64px);background:rgba(3,5,18,.55);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .25s;z-index:85}
+body.nav-open .nav-backdrop{opacity:1;pointer-events:auto}
+body.light-mode .sidebar{background:#fff;box-shadow:8px 0 40px rgba(40,50,120,.18)}
+body.light-mode .nav-backdrop{background:rgba(20,25,60,.28)}
+
+/* chat fills the screen, only messages scroll */
+.chat-page-grid.chat-only{height:100%;display:block}
+.chat-panel-tall{height:100%!important;min-height:0!important;max-width:980px;margin:0 auto;display:flex;flex-direction:column}
+.chat-panel-tall .chat-head,.chat-panel-tall .chat-input-row{flex:0 0 auto}
+.chat-panel-tall .chat-body{flex:1 1 auto;min-height:0!important;overflow-y:auto;scroll-behavior:smooth;overscroll-behavior:contain}
+.chat-input-row{align-items:flex-end}
+.chat-input-row textarea{flex:1;resize:none;max-height:160px;min-height:44px;background:rgba(255,255,255,.05);border:1px solid var(--border-glow);border-radius:22px;padding:12px 18px;
+  color:var(--text-main);outline:none;font:inherit;line-height:1.4}
+.chat-input-row textarea:focus{border-color:var(--cyan)}
+body.light-mode .chat-input-row textarea{background:#fff;color:#12152b;border-color:rgba(70,58,190,.35)}
+.msg.typing-reveal .msg-actions,.msg.typing-reveal .sources-box,.msg.typing-reveal .time{opacity:0;pointer-events:none}
+.msg.bot{max-width:min(760px,94%)}
+
+@media (max-width:768px){
+  body{padding-bottom:0!important}
+  .topbar{padding:8px 12px!important}
+  .page-content{padding:10px 10px 18px}
+  .page-content:has(.chat-only){padding:6px}
+  .chat-panel-tall{border-radius:16px;max-width:none}
+  .chat-panel-tall .chat-body{padding:12px 10px}
+  .upload-limit-hint{display:none}
+  .chat-head{padding:10px 12px}
+  .msg{max-width:94%}
+  .scroll-down-btn{bottom:78px}
+  .suggest-row{gap:6px}
+}
+
+/* ============================================================
+   WELCOME / LOGIN PAGE — full light theme
+   ============================================================ */
+body.light-mode .premium-welcome{--pw-text:#0d1230;--pw-muted:#4a5478;color:#0d1230;
+  background:radial-gradient(circle at 54% 52%,rgba(110,90,255,.16),transparent 34%),radial-gradient(circle at 8% 18%,rgba(34,232,255,.30),transparent 32%),radial-gradient(circle at 92% 88%,rgba(255,60,210,.16),transparent 34%),linear-gradient(115deg,#f7f9ff 0%,#edf1ff 50%,#f8f2ff 100%)}
+body.light-mode .premium-welcome:before{background-image:linear-gradient(rgba(80,90,200,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(80,90,200,.09) 1px,transparent 1px)}
+body.light-mode .premium-welcome:after{background:none}
+body.light-mode .premium-topbar{background:rgba(255,255,255,.85);border-bottom:1px solid rgba(70,58,190,.18)}
+body.light-mode .premium-logo small{color:#4a5478}
+body.light-mode .brain-logo-wrap{background:#fff;border-color:rgba(70,58,190,.3);box-shadow:0 6px 18px rgba(70,58,190,.15)}
+body.light-mode .mini-pill,body.light-mode .mini-icon{background:#fff;color:#12152b;border-color:rgba(70,58,190,.35)}
+body.light-mode .eyebrow{color:#3a2fe0}
+body.light-mode .premium-welcome .premium-hero h1{background:linear-gradient(90deg,#0a9bd6,#4b3ff0 50%,#d61fb8)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none}
+body.light-mode .hero-line{color:#0d1230}
+body.light-mode .hero-line b{color:#1a5cff}
+body.light-mode .premium-welcome .hero-copy{color:#3a4468!important}
+body.light-mode .feature-card{background:#fff;border-color:rgba(70,58,190,.28);box-shadow:0 8px 22px rgba(70,58,190,.10)}
+body.light-mode .feature-card strong{color:#0d1230}
+body.light-mode .feature-card small{color:#4a5478}
+body.light-mode .feature-card span{text-shadow:none}
+body.light-mode .quote-line{color:#3a4468}
+body.light-mode .quote-line b{color:#0d1230}
+body.light-mode .scene-halo{background:radial-gradient(circle,rgba(70,100,255,.16),rgba(214,31,184,.08) 44%,transparent 70%)}
+body.light-mode .scene-card{background:#fff;border-color:rgba(70,58,190,.3);box-shadow:0 10px 24px rgba(70,58,190,.16)}
+body.light-mode .scene-card small{color:#4a5478}
+body.light-mode .card-answer b{color:#0d1230}
+body.light-mode .base-platform:after{background:#fff}
+body.light-mode .scene-caption,body.light-mode .scene-caption span{color:#4a5478}
+body.light-mode .scene-caption b{color:#0d1230}
+body.light-mode .premium-login{box-shadow:0 24px 60px rgba(70,58,190,.20)}
+body.light-mode .premium-login:before{background:#fff}
+body.light-mode .login-glow{opacity:.35}
+body.light-mode .login-inner h2{color:#0d1230}
+body.light-mode .login-sub,body.light-mode .login-options,body.light-mode .login-brand-mark small{color:#4a5478}
+body.light-mode .premium-field{background:#f4f6ff;border-color:rgba(70,58,190,.35)}
+body.light-mode .premium-field input{color:#12152b!important;background:transparent!important;border:0!important}
+body.light-mode .premium-field input::placeholder{color:#6b7391}
+body.light-mode .premium-field>span,body.light-mode .premium-field button{color:#4b2fe0}
+body.light-mode .login-options a{color:#c01aa0;font-weight:600}
+body.light-mode .or-line{color:#4a5478}
+body.light-mode .premium-create{background:#fff;color:#1a5cff;border-color:#1a5cff}
+body.light-mode .premium-create:hover{background:#eef3ff}
+body.light-mode .trust-row{color:#4a5478}
+body.light-mode .trust-row span:first-child{color:#5a3cf0}
+body.light-mode .trust-row span:nth-child(2){color:#0a86c0}
+body.light-mode .trust-row span:last-child{color:#c01aa0}
+body.light-mode .premium-flash{color:#8a1230;background:#ffe9ee}
+body.light-mode .premium-footer{background:rgba(255,255,255,.85);border-top-color:rgba(70,58,190,.15);color:#4a5478}
+body.light-mode .premium-footer span:first-child{color:#0d1230}
+/* register / login pages: the base h1..p overrides must not break gradient titles */
+body.light-mode .premium-welcome h1,body.light-mode .premium-welcome p,body.light-mode .premium-welcome strong{-webkit-text-fill-color:initial}
+body.light-mode .premium-welcome .premium-hero h1{-webkit-text-fill-color:transparent}
+body.light-mode .premium-welcome .premium-logo strong,body.light-mode .premium-welcome .login-brand-mark strong{background:linear-gradient(90deg,#0a9bd6,#7a3cf0,#d61fb8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+@media(max-width:800px){body.light-mode .premium-topbar{background:#fff}.premium-welcome{overflow-y:auto}}
+
+/* ================= FINAL UX FIXES ================= */
+/* The navigation drawer must not blur the entire application. It may dim the
+   page slightly, but the underlying content stays crisp and interactive. */
+.nav-backdrop{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(3,5,18,.24)!important}
+body.light-mode .nav-backdrop{background:rgba(20,25,60,.10)!important}
+.sidebar{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.nav-item{position:relative;z-index:1}
+
+/* Login is intentionally scrollable when the card is taller than the viewport.
+   The previous shell-level overflow:hidden clipped the lower half of the form. */
+html:has(.login-shell), body:has(.login-shell){height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto!important}
+.login-shell{min-height:100svh!important;height:auto!important;overflow:visible!important;align-items:start}
+.login-hero{min-height:100svh!important;height:auto!important}
+.login-panel{align-self:start;min-height:100svh;padding-bottom:64px}
+@media (max-width:1100px){
+  .login-shell{grid-template-columns:1fr;overflow:visible!important}
+  .login-hero{min-height:620px!important}
+  .login-panel{min-height:0;padding-bottom:56px}
+}
+@media (max-width:650px){
+  .login-hero{min-height:590px!important}
+  .login-panel{padding-bottom:40px}
+}
+
+/* ============================================================
+   NAVIGATION CLICK FIX
+   Keep the drawer above the backdrop and make every link clickable.
+   ============================================================ */
+.sidebar,
+.sidebar * {
+  pointer-events: auto !important;
+}
+.sidebar {
+  z-index: 200 !important;
+}
+.nav-backdrop {
+  z-index: 100 !important;
+  pointer-events: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+body.nav-open .nav-backdrop {
+  pointer-events: none !important;
+}
+.nav-item {
+  position: relative !important;
+  z-index: 201 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  touch-action: manipulation;
+}
+.nav-item * {
+  pointer-events: none !important;
+}
