@@ -408,8 +408,11 @@
   });
 
   // Restore the same conversation after visiting another page.
+  // Never show the New Conversation greeting while an existing chat is loading.
   if (currentConversationId) {
     saveCurrentConversation();
+    if (chatTitle) chatTitle.textContent = 'Loading conversation…';
+    if (chatBody) chatBody.innerHTML = '<div class="conversation-loading" aria-live="polite">Loading conversation…</div>';
     fetch(`/api/conversations/${currentConversationId}/messages`)
       .then(r => r.json())
       .then(data => {
@@ -417,6 +420,7 @@
           // Conversation was deleted or is no longer available.
           currentConversationId = null;
           saveCurrentConversation();
+          startNewChat();
           return;
         }
         if (chatTitle) chatTitle.textContent = data.title || 'Conversation';
