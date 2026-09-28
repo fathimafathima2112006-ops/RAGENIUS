@@ -1454,6 +1454,18 @@ def retrieval_api():
     return jsonify({"success":True,"query":q,"variants":meta["variants"],"strategy":meta["strategy"],"query_intent":meta.get("query_intent",[]),"topic_query":meta.get("topic_query",q),"candidate_count":meta.get("candidate_count",len(results)),"rejected_count":meta.get("rejected_count",0),"latency_ms":round(elapsed,1),"results":payload,"rejected":meta.get("rejected",[])})
 
 
+@app.route("/api/ai/health")
+@login_required
+def ai_health():
+    """Safe diagnostic endpoint: never exposes the API key."""
+    try:
+        from utils.groq_client import _api_key, GROQ_MODEL
+        _api_key()
+        return jsonify({"success": True, "configured": True, "model": GROQ_MODEL})
+    except Exception as exc:
+        return jsonify({"success": False, "configured": False, "error": str(exc)}), 503
+
+
 @app.route("/api/analytics")
 @login_required
 def analytics_api():
