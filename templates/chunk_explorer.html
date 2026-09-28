@@ -1,0 +1,18 @@
+{% extends "base_app.html" %}
+{% block title %}Chunk Explorer · RAGENIUS{% endblock %}
+{% block page_content %}
+<div class="page-header"><h2>🧩 <span data-i18n="chunk_explorer">Chunk Explorer</span></h2><p>Inspect the document chunks used by RAGENIUS retrieval.</p></div>
+<div class="glass-panel docs-panel docs-panel-wide">
+  <div class="explorer-head"><strong>{{ chunks|length }} chunks shown</strong><span>{{ docs|length }} documents</span></div>
+  {% if chunks %}
+  <div class="chunk-list">
+    {% for c in chunks %}
+    <div class="chunk-card">
+      <div class="chunk-meta"><span>📄 {{ c.document.filename }}</span><span>Page {{ c.page }} · Chunk {{ c.chunk_index + 1 }}</span></div>
+      <div class="chunk-text">{{ c.text }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}<div class="empty-state"><div class="big-ic">🧩</div><div>No chunks yet. Upload a PDF from Chat or Knowledge Base.</div></div>{% endif %}
+</div>
+{% endblock %}

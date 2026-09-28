@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{% block title %}RAGENIUS{% endblock %}</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+Tamil:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/theme_fix.css') }}">
+<script>document.documentElement.dataset.theme = localStorage.getItem('ragenius_theme') || 'dark';</script>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+<div class="bg-orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+<div class="grid-overlay"></div>
+{% block content %}{% endblock %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_scripts %}{% endblock %}
+<script>
+(function(){
+  var isAuth = !document.getElementById('appLayout');
+  function apply(t){
+    var light=t==='light';
+    document.body.classList.toggle('light-mode',light);
+    document.documentElement.dataset.theme=light?'light':'dark';
+    var b=document.getElementById('authThemeToggle'); if(b) b.textContent=light?'\u263E':'\u2600';
+  }
+  if(isAuth){
+    var own=document.querySelector('.mini-icon');
+    var btn=own||document.createElement('button');
+    if(!own){ btn.type='button'; btn.className='auth-theme-toggle'; btn.setAttribute('aria-label','Toggle light / dark theme'); document.body.appendChild(btn); }
+    btn.id='authThemeToggle';
+    apply(localStorage.getItem('ragenius_theme')||'dark');
+    btn.addEventListener('click',function(){var n=document.body.classList.contains('light-mode')?'dark':'light';localStorage.setItem('ragenius_theme',n);apply(n);});
+  }
+})();
+</script>
+</body>
+</html>

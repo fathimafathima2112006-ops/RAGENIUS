@@ -1,0 +1,1226 @@
+{% extends "base_app.html" %}
+{% block title %}Chat Session History · RAGENIUS{% endblock %}
+
+{% block page_content %}
+<div class="history-page">
+
+  <!-- HEADER -->
+  <div class="history-header">
+    <div>
+      <div class="history-kicker">RAGENIUS / INSIGHTS</div>
+      <h2>Chat Session History</h2>
+      <p>Browse and reopen your existing conversations without creating a new chat.</p>
+    </div>
+
+    <div class="history-header-badge">
+      LIVE SESSION ARCHIVE
+    </div>
+  </div>
+
+  <!-- SAFE DEFAULTS -->
+  {% set safe_metrics = metrics|default({}, true) %}
+  {% set safe_conversations = conversations|default([], true) %}
+
+  <!-- METRICS -->
+  <div class="metrics-grid">
+
+    <div class="metric-card cyan">
+      <div class="metric-title">Total Interactions</div>
+      <div class="metric-value">
+        {{ safe_metrics.total_interactions|default(safe_conversations|length, true) }}
+      </div>
+    </div>
+
+    <div class="metric-card purple">
+      <div class="metric-title">Active Chats</div>
+      <div class="metric-value">
+        {{ safe_metrics.active_chats|default(safe_conversations|length, true) }}
+      </div>
+    </div>
+
+    <div class="metric-card green">
+      <div class="metric-title">High Value Queries</div>
+      <div class="metric-value">
+        {{ safe_metrics.high_value|default(0, true) }}
+      </div>
+    </div>
+
+    <div class="metric-card magenta">
+      <div class="metric-title">Chat Relevance</div>
+      <div class="metric-value">
+        {{ safe_metrics.relevance|default(0, true) }}%
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MAIN -->
+  <div class="history-layout">
+
+    <!-- LEFT -->
+    <section class="glass-panel main-content">
+
+      <!-- TOOLBAR -->
+      <div class="toolbar">
+
+        <div class="search-box">
+          <span class="search-icon">⌕</span>
+
+          <input
+            id="sessionSearch"
+            type="search"
+            placeholder="Search sessions, titles, users or messages..."
+            autocomplete="off"
+          >
+        </div>
+
+        <div class="filter-group">
+
+          <select id="sessionTypeFilter" class="custom-select">
+            <option value="all">All session types</option>
+            <option value="Knowledge-Grounded">
+              Knowledge-Grounded
+            </option>
+            <option value="Research / Analysis">
+              Research / Analysis
+            </option>
+            <option value="General Chat">
+              General Chat
+            </option>
+          </select>
+
+          <select id="sourceFilter" class="custom-select">
+            <option value="all">All sources</option>
+            <option value="PDF">PDF</option>
+            <option value="Doc">Doc</option>
+          </select>
+
+        </div>
+      </div>
+
+      <!-- COUNT -->
+      <div class="session-count-line">
+
+        <span id="sessionCount">
+          {{ safe_conversations|length }}
+          session{% if safe_conversations|length != 1 %}s{% endif %}
+        </span>
+
+        <span class="archive-status">
+          Existing conversations only
+        </span>
+
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-container">
+
+        <table class="session-table">
+
+          <thead>
+            <tr>
+              <th>Session</th>
+              <th>Type</th>
+              <th>Sources</th>
+              <th>Key Topics</th>
+              <th>Activity</th>
+              <th>Duration</th>
+              <th>Relevance</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody id="sessionRows">
+
+          {% for c in safe_conversations %}
+
+            {% set cid = c.id|default('', true) %}
+            {% set title = c.title|default('Untitled conversation', true) %}
+            {% set preview = c.preview|default('', true) %}
+            {% set user_name = c.user_name|default('User', true) %}
+            {% set session_type = c.session_type|default('General Chat', true) %}
+            {% set sources = c.sources|default([], true) %}
+            {% set tags = c.tags|default([], true) %}
+            {% set duration = c.duration|default('—', true) %}
+            {% set relevance = c.relevance|default(
+                safe_metrics.relevance|default(0, true),
+                true
+            ) %}
+
+            <tr
+              class="session-row"
+
+              data-search="
+                {{
+                  (
+                    title|string
+                    ~ ' '
+                    ~ preview|string
+                    ~ ' '
+                    ~ user_name|string
+                    ~ ' '
+                    ~ (sources|join(' '))
+                    ~ ' '
+                    ~ (tags|join(' '))
+                  )|lower|e
+                }}
+              "
+
+              data-type="{{ session_type|string|e }}"
+
+              data-sources="{{ sources|join('|')|lower|e }}"
+            >
+
+              <!-- SESSION -->
+              <td class="session-cell">
+
+                {% if cid != '' %}
+
+                  <a
+                    class="session-id-link"
+                    href="{{ url_for('dashboard', conv=cid) }}"
+                  >
+
+                    <span class="session-number">
+                      #{{ '%05d'|format(cid|int) }}
+                    </span>
+
+                    <span class="session-title">
+                      {{ title }}
+                    </span>
+
+                  </a>
+
+                {% else %}
+
+                  <div class="session-id-link disabled">
+                    <span class="session-title">
+                      {{ title }}
+                    </span>
+                  </div>
+
+                {% endif %}
+
+                <div class="session-preview">
+                  {{
+                    preview
+                    |string
+                    |replace('<br>', ' ')
+                    |replace('<br/>', ' ')
+                    |replace('<br />', ' ')
+                    |truncate(120, true, '…')
+                  }}
+                </div>
+
+                <div class="session-user">
+                  👤 {{ user_name }}
+                </div>
+
+              </td>
+
+              <!-- TYPE -->
+              <td>
+                <span class="badge type-badge">
+                  {{ session_type }}
+                </span>
+              </td>
+
+              <!-- SOURCES -->
+              <td>
+
+                <div class="sources-wrap">
+
+                  {% for s in sources %}
+
+                    <span
+                      class="source-item"
+                      title="{{ s }}"
+                    >
+                      📄 {{ s }}
+                    </span>
+
+                  {% else %}
+
+                    <span class="muted-text">
+                      No source
+                    </span>
+
+                  {% endfor %}
+
+                </div>
+
+              </td>
+
+              <!-- TAGS -->
+              <td>
+
+                <div class="tags-wrap">
+
+                  {% for t in tags[:4] %}
+
+                    <span class="badge tag-badge">
+                      {{ t }}
+                    </span>
+
+                  {% else %}
+
+                    <span class="muted-text">
+                      Conversation
+                    </span>
+
+                  {% endfor %}
+
+                </div>
+
+              </td>
+
+              <!-- ACTIVITY -->
+              <td>
+
+                <div class="activity-cell">
+
+                  <div class="activity-bars">
+
+                    {% for p in c.spark|default(
+                      [35, 55, 72, 48, 82],
+                      true
+                    ) %}
+
+                      <i
+                        style="--height-percent: {{ p|default(50, true) }}%;"
+                      ></i>
+
+                    {% endfor %}
+
+                  </div>
+
+                  <span class="activity-label">
+
+                    {{
+                      c.message_count
+                      |default(
+                        c.messages_count|default('—', true),
+                        true
+                      )
+                    }}
+                    messages
+
+                  </span>
+
+                </div>
+
+              </td>
+
+              <!-- DURATION -->
+              <td>
+                <span class="duration-text">
+                  {{ duration }}
+                </span>
+              </td>
+
+              <!-- RELEVANCE -->
+              <td>
+
+                <div class="relevance-cell">
+
+                  <strong>
+                    {{ relevance }}%
+                  </strong>
+
+                  <span class="relevance-track">
+                    <i
+                      style="--relevance-width: {{ relevance|default(0, true)|int }}%; width: var(--relevance-width);"
+                    ></i>
+                  </span>
+
+                </div>
+
+              </td>
+
+              <!-- ACTION -->
+              <td>
+
+                {% if cid != '' %}
+
+                  <a
+                    class="open-session-btn"
+                    href="{{ url_for('dashboard', conv=cid) }}"
+                  >
+                    Open
+                  </a>
+
+                {% else %}
+
+                  <span class="muted-text">
+                    Unavailable
+                  </span>
+
+                {% endif %}
+
+              </td>
+
+            </tr>
+
+          {% else %}
+
+            <tr>
+
+              <td
+                colspan="8"
+                class="empty-state"
+              >
+
+                <div class="empty-icon">
+                  💬
+                </div>
+
+                <h3>
+                  No chat sessions found
+                </h3>
+
+                <p>
+                  Your existing conversations will appear here.
+                </p>
+
+              </td>
+
+            </tr>
+
+          {% endfor %}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <!-- FILTER EMPTY -->
+      <div
+        id="noFilteredResults"
+        class="empty-filter-state"
+        hidden
+      >
+
+        <div class="empty-icon">
+          ⌕
+        </div>
+
+        <strong>
+          No matching sessions
+        </strong>
+
+        <span>
+          Try a different search or filter.
+        </span>
+
+      </div>
+
+    </section>
+
+    <!-- RIGHT SIDEBAR -->
+    <aside class="sidebar-intelligence">
+
+      <!-- KNOWLEDGE -->
+      <div class="glass-panel sidebar-card">
+
+        <div class="card-kicker">
+          KNOWLEDGE INTELLIGENCE
+        </div>
+
+        <h3>
+          Health &amp; Performance
+        </h3>
+
+        <div class="sub-heading">
+          <span>
+            Chat Retrieval Precision
+          </span>
+
+          <span class="mini-pill active">
+            Live
+          </span>
+        </div>
+
+        <div class="chart-box">
+
+          <div class="large-score">
+            {{ safe_metrics.relevance|default(0, true) }}%
+          </div>
+
+          <div class="score-caption">
+            Current relevance signal
+          </div>
+
+        </div>
+
+        <div class="sub-heading">
+          Chunk Coverage
+        </div>
+
+        <div class="coverage-heatmap">
+
+          {% for i in range(32) %}
+
+            <i
+              class="heat-tile level-{{ (i * 3) % 5 }}"
+            ></i>
+
+          {% endfor %}
+
+        </div>
+
+      </div>
+
+      <!-- TOP QUERIES -->
+      <div class="glass-panel sidebar-card">
+
+        <div class="card-kicker">
+          TOP QUERIES
+        </div>
+
+        <h3>
+          Query Pulse
+        </h3>
+
+        <div class="word-cloud">
+
+          <span class="q-tag q-lg">
+            Queries
+          </span>
+
+          <span class="q-tag q-md">
+            Transformer
+          </span>
+
+          <span class="q-tag q-sm">
+            Project
+          </span>
+
+          <span class="q-tag q-md">
+            Marketing
+          </span>
+
+          <span class="q-tag q-sm">
+            Draft
+          </span>
+
+        </div>
+
+      </div>
+
+      <!-- SYSTEM LOGS -->
+      <div class="glass-panel sidebar-card">
+
+        <div class="card-kicker">
+          SYSTEM LOGS
+        </div>
+
+        <h3>
+          Recent Activity
+        </h3>
+
+        <div class="log-list">
+
+          <div class="log-item">
+            <span class="dot"></span>
+            Conversation archive ready
+          </div>
+
+          <div class="log-item">
+            <span class="dot"></span>
+            Existing session links enabled
+          </div>
+
+          <div class="log-item">
+            <span class="dot"></span>
+            History view synchronized
+          </div>
+
+        </div>
+
+      </div>
+
+    </aside>
+
+  </div>
+
+</div>
+{% endblock %}
+
+
+{% block page_scripts %}
+
+<style>
+
+.history-page {
+  padding: 24px;
+  min-height: 100%;
+  color: var(--text-primary, #eef5ff);
+}
+
+.history-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.history-kicker,
+.card-kicker {
+  font-size: 11px;
+  letter-spacing: .16em;
+  font-weight: 800;
+  opacity: .65;
+}
+
+.history-header h2 {
+  margin: 5px 0 4px;
+  font-size: 28px;
+}
+
+.history-header p {
+  margin: 0;
+  opacity: .62;
+}
+
+.history-header-badge,
+.archive-status,
+.mini-pill {
+  border: 1px solid rgba(120,170,255,.2);
+  border-radius: 999px;
+  padding: 7px 11px;
+  font-size: 11px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.metric-card,
+.glass-panel {
+  background: rgba(13,20,36,.72);
+  border: 1px solid rgba(135,170,220,.14);
+  box-shadow: 0 14px 40px rgba(0,0,0,.18);
+  border-radius: 16px;
+}
+
+.metric-card {
+  padding: 17px 19px;
+}
+
+.metric-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  opacity: .6;
+}
+
+.metric-value {
+  font-size: 27px;
+  font-weight: 800;
+  margin-top: 7px;
+}
+
+.cyan {
+  box-shadow: inset 0 2px 0 rgba(80,220,255,.55);
+}
+
+.purple {
+  box-shadow: inset 0 2px 0 rgba(160,120,255,.55);
+}
+
+.green {
+  box-shadow: inset 0 2px 0 rgba(90,230,160,.55);
+}
+
+.magenta {
+  box-shadow: inset 0 2px 0 rgba(235,90,190,.55);
+}
+
+.history-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+}
+
+.main-content {
+  min-width: 0;
+  padding: 16px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 240px;
+  background: rgba(255,255,255,.035);
+  border: 1px solid rgba(150,180,220,.13);
+  border-radius: 11px;
+  padding: 0 12px;
+}
+
+.search-box input {
+  width: 100%;
+  height: 42px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.filter-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.custom-select {
+  height: 42px;
+  border-radius: 10px;
+  padding: 0 11px;
+  background: #111a2c;
+  color: inherit;
+  border: 1px solid rgba(150,180,220,.14);
+}
+
+.session-count-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 15px 2px 10px;
+  font-size: 12px;
+  opacity: .72;
+}
+
+.table-container {
+  overflow: auto;
+  border: 1px solid rgba(150,180,220,.1);
+  border-radius: 12px;
+}
+
+.session-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1050px;
+}
+
+.session-table th {
+  padding: 12px;
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  opacity: .52;
+  background: rgba(255,255,255,.025);
+  white-space: nowrap;
+}
+
+.session-table td {
+  padding: 13px 12px;
+  border-top: 1px solid rgba(150,180,220,.08);
+  vertical-align: middle;
+}
+
+.session-row:hover {
+  background: rgba(100,160,255,.045);
+}
+
+.session-id-link {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.session-id-link.disabled {
+  opacity: .7;
+}
+
+.session-number {
+  font-size: 10px;
+  font-weight: 800;
+  opacity: .5;
+}
+
+.session-title {
+  font-weight: 750;
+}
+
+.session-preview {
+  max-width: 260px;
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: .55;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-user {
+  font-size: 10px;
+  opacity: .5;
+  margin-top: 5px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.type-badge {
+  background: rgba(100,150,255,.1);
+  border: 1px solid rgba(100,150,255,.15);
+}
+
+.tag-badge {
+  background: rgba(180,130,255,.08);
+  margin: 2px;
+}
+
+.sources-wrap,
+.tags-wrap {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  max-width: 170px;
+}
+
+.source-item {
+  font-size: 10px;
+  opacity: .72;
+  white-space: nowrap;
+}
+
+.muted-text {
+  font-size: 10px;
+  opacity: .4;
+}
+
+.activity-cell {
+  min-width: 85px;
+}
+
+.activity-bars {
+  height: 24px;
+  display: flex;
+  align-items: end;
+  gap: 3px;
+}
+
+.activity-bars i {
+  display: block;
+  width: 5px;
+  height: var(--height-percent, 50%);
+  min-height: 3px;
+  border-radius: 3px;
+  background: currentColor;
+  opacity: .5;
+}
+
+.activity-label {
+  display: block;
+  font-size: 9px;
+  opacity: .45;
+  margin-top: 3px;
+}
+
+.duration-text {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.relevance-cell {
+  min-width: 80px;
+}
+
+.relevance-cell strong {
+  font-size: 11px;
+}
+
+.relevance-track {
+  display: block;
+  height: 4px;
+  margin-top: 5px;
+  border-radius: 5px;
+  background: rgba(255,255,255,.08);
+  overflow: hidden;
+}
+
+.relevance-track i {
+  display: block;
+  height: 100%;
+  background: currentColor;
+  opacity: .65;
+}
+
+.open-session-btn {
+  display: inline-flex;
+  text-decoration: none;
+  border: 1px solid rgba(100,180,255,.2);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 11px;
+  color: inherit;
+}
+
+.open-session-btn:hover {
+  background: rgba(100,180,255,.1);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 55px 20px !important;
+}
+
+.empty-icon {
+  font-size: 25px;
+  margin-bottom: 8px;
+}
+
+.empty-state h3 {
+  margin: 0 0 5px;
+}
+
+.empty-state p,
+.empty-filter-state span {
+  opacity: .55;
+  font-size: 12px;
+}
+
+.empty-filter-state {
+  text-align: center;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sidebar-intelligence {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sidebar-card {
+  padding: 17px;
+}
+
+.sidebar-card h3 {
+  margin: 5px 0 17px;
+  font-size: 16px;
+}
+
+.sub-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  margin: 12px 0 8px;
+  opacity: .72;
+}
+
+.mini-pill {
+  padding: 5px 8px;
+}
+
+.chart-box {
+  padding: 18px;
+  border: 1px solid rgba(150,180,220,.1);
+  border-radius: 12px;
+  background: rgba(255,255,255,.025);
+}
+
+.large-score {
+  font-size: 32px;
+  font-weight: 850;
+}
+
+.score-caption {
+  font-size: 10px;
+  opacity: .45;
+  margin-top: 3px;
+}
+
+.coverage-heatmap {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+
+.heat-tile {
+  height: 13px;
+  border-radius: 3px;
+  background: currentColor;
+  opacity: .12;
+}
+
+.heat-tile.level-1 { opacity: .25; }
+.heat-tile.level-2 { opacity: .38; }
+.heat-tile.level-3 { opacity: .55; }
+.heat-tile.level-4 { opacity: .72; }
+
+.word-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 0;
+}
+
+.q-tag {
+  opacity: .6;
+}
+
+.q-lg {
+  font-size: 22px;
+}
+
+.q-md {
+  font-size: 15px;
+}
+
+.q-sm {
+  font-size: 11px;
+}
+
+.log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.log-item {
+  font-size: 11px;
+  opacity: .62;
+  line-height: 1.45;
+}
+
+.dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  margin-right: 6px;
+}
+
+@media (max-width: 1100px) {
+
+  .history-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar-intelligence {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+}
+
+@media (max-width: 760px) {
+
+  .history-page {
+    padding: 14px;
+  }
+
+  .history-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .sidebar-intelligence {
+    display: flex;
+  }
+
+  .filter-group {
+    width: 100%;
+  }
+
+  .custom-select {
+    flex: 1;
+    min-width: 140px;
+  }
+
+}
+
+@media (max-width: 480px) {
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .history-header h2 {
+    font-size: 22px;
+  }
+
+  .history-header-badge {
+    display: none;
+  }
+
+}
+
+</style>
+
+
+<script>
+
+(function () {
+
+  const search =
+    document.getElementById("sessionSearch");
+
+  const typeFilter =
+    document.getElementById("sessionTypeFilter");
+
+  const sourceFilter =
+    document.getElementById("sourceFilter");
+
+  const rows =
+    Array.from(
+      document.querySelectorAll(".session-row")
+    );
+
+  const count =
+    document.getElementById("sessionCount");
+
+  const empty =
+    document.getElementById("noFilteredResults");
+
+
+  function filterRows() {
+
+    const q =
+      search
+        ? search.value.toLowerCase().trim()
+        : "";
+
+    const type =
+      typeFilter
+        ? typeFilter.value
+        : "all";
+
+    const source =
+      sourceFilter
+        ? sourceFilter.value.toLowerCase()
+        : "all";
+
+
+    let visible = 0;
+
+
+    rows.forEach(function (row) {
+
+      const haystack =
+        row.dataset.search || "";
+
+      const rowType =
+        row.dataset.type || "";
+
+      const sources =
+        row.dataset.sources || "";
+
+
+      const okQuery =
+        !q ||
+        haystack.includes(q);
+
+
+      const okType =
+        type === "all" ||
+        rowType === type;
+
+
+      const okSource =
+        source === "all" ||
+        sources.includes(source);
+
+
+      const show =
+        okQuery &&
+        okType &&
+        okSource;
+
+
+      row.hidden = !show;
+
+
+      if (show) {
+        visible++;
+      }
+
+    });
+
+
+    if (count) {
+
+      count.textContent =
+        visible +
+        " session" +
+        (visible === 1 ? "" : "s");
+
+    }
+
+
+    if (empty) {
+
+      empty.hidden =
+        visible !== 0 ||
+        rows.length === 0;
+
+    }
+
+  }
+
+
+  if (search) {
+    search.addEventListener(
+      "input",
+      filterRows
+    );
+  }
+
+
+  if (typeFilter) {
+    typeFilter.addEventListener(
+      "change",
+      filterRows
+    );
+  }
+
+
+  if (sourceFilter) {
+    sourceFilter.addEventListener(
+      "change",
+      filterRows
+    );
+  }
+
+
+})();
+
+</script>
+
+{% endblock %}

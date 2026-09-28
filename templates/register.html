@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Create Account · RAGENIUS{% endblock %}
+{% block content %}
+<div class="welcome-wrap" style="grid-template-columns: 1fr; justify-items: center;">
+  <div class="glass-panel auth-card" style="position:relative;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash-msgs">
+        {% for cat, msg in messages %}<div class="flash">{{ msg }}</div>{% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="welcome-brand">
+      <span class="logo-icon" style="font-size:2rem;">🧠</span>
+      <h1 class="brand-gradient" style="margin:6px 0 0;">RAGENIUS</h1>
+    </div>
+    <h2>Create your account</h2>
+
+    <form method="POST" action="{{ url_for('register') }}">
+      <div class="field">
+        <span class="icon">👤</span>
+        <input type="text" name="username" placeholder="Choose a username" required>
+      </div>
+      <div class="field">
+        <span class="icon">📧</span>
+        <input type="email" name="email" placeholder="Email address" required>
+      </div>
+      <div class="field">
+        <span class="icon">🔒</span>
+        <input type="password" id="pw" name="password" placeholder="Create a password" required minlength="4">
+        <button type="button" class="toggle-pw" onclick="togglePw()">👁️</button>
+      </div>
+      <button type="submit" class="btn-neon" style="margin-top:6px;">Create Account →</button>
+    </form>
+
+    <p class="footer-tag" style="margin-top:22px;">Already have an account?</p>
+    <a href="{{ url_for('login') }}" class="btn-outline-neon">🔑 Login instead</a>
+
+    <div class="divider-text"></div>
+    <p class="footer-tag">⚡ Secure · Fast · Powered by Groq</p>
+  </div>
+</div>
+<script>
+function togglePw(){
+  const pw = document.getElementById('pw');
+  pw.type = pw.type === 'password' ? 'text' : 'password';
+}
+</script>
+{% endblock %}

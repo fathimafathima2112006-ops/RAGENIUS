@@ -1,0 +1,15 @@
+{% extends "base_app.html" %}
+{% block title %}Math & Logic · RAGENIUS{% endblock %}
+{% block page_content %}
+<div class="page-header">
+  <h2>✖️ Math &amp; Logic</h2>
+  <p>Step-by-step solutions for algebra, arithmetic, word problems and logical reasoning — in any language you ask.</p>
+</div>
+{% with panel_title="Math & Logic Solver", panel_subtitle="Solve & Reason with step-by-step working", show_quick_math=True, greeting_text="Hi! Give me a maths or logic problem — in English, Tamil, Tanglish or any language — and I'll break the solution into clear steps." %}
+  {% include "partials/chat_widget.html" %}
+{% endwith %}
+{% endblock %}
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+<script>RAGENIUS_LOAD_CONVERSATION_ID = null;</script>
+{% endblock %}

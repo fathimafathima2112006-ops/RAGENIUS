@@ -1,0 +1,122 @@
+{% extends "base_app.html" %}
+{% block title %}Documents · RAGENIUS{% endblock %}
+{% block page_content %}
+<div class="page-header documents-head">
+  <div><div class="eyebrow">SOURCE CATALOG · ADVANCED WORKFLOW</div><h2>📄 Documents <small class="head-sub">Advanced Workflow</small></h2><p>Manage the files behind your knowledge base — pipelines, status, metadata, and document actions.</p></div>
+  <div><button class="btn-mini" id="uploadBtn">＋ Upload Document</button><input type="file" id="fileInput" accept="*/*" class="hidden"></div>
+</div>
+
+<div class="glass-panel pipeline-connectors">
+  <div class="pc-head"><div class="section-kicker">INGESTION PIPELINE</div><span class="pc-live"><i class="live-dot">●</i> Live</span></div>
+  <div class="pc-row">
+    <div class="connector-chip on"><span class="pc-ic">🗂️</span><div><b>GDrive</b><small>Connected</small></div></div>
+    <i class="pc-arrow">→</i>
+    <div class="connector-chip on"><span class="pc-ic">☁️</span><div><b>OneDrive</b><small>Connected</small></div></div>
+    <i class="pc-arrow">→</i>
+    <div class="connector-chip"><span class="pc-ic">🔍</span><div><b>OCR</b><small>Idle</small></div></div>
+    <i class="pc-arrow">→</i>
+    <div class="connector-chip"><span class="pc-ic">🏷️</span><div><b>Metadata Extraction</b><small>Idle</small></div></div>
+  </div>
+</div>
+
+<div class="stats-row doc-metric-row">
+  <div class="glass-panel stat-card c-magenta">
+    <div class="top"><div class="ic">🗃️</div></div>
+    <div class="val">{{ stats.documents }}</div><div class="label">Total Documents</div>
+    <svg class="mini-spark" viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="0,24 15,20 30,22 45,14 60,16 75,8 100,4" fill="none" stroke="#ff3fd8" stroke-width="3"/></svg>
+  </div>
+  <div class="glass-panel stat-card c-teal">
+    <div class="top"><div class="ic">🎯</div></div>
+    <div class="val">{{ doc_extra.avg_coverage }}%</div><div class="label">Avg. Index Coverage</div>
+    <svg class="mini-spark" viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="0,20 15,22 30,12 45,16 60,10 75,14 100,2" fill="none" stroke="#22e8ff" stroke-width="3"/></svg>
+  </div>
+  <div class="glass-panel stat-card c-indigo">
+    <div class="top"><div class="ic">🗂️</div></div>
+    <div class="val">{{ doc_extra.file_types }}</div><div class="label">File Types</div>
+    <svg class="mini-spark" viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="0,26 15,18 30,20 45,10 60,12 75,6 100,10" fill="none" stroke="#8b7cff" stroke-width="3"/></svg>
+  </div>
+  <div class="glass-panel stat-card c-lime">
+    <div class="top"><div class="ic">🔄</div></div>
+    <div class="val">Idle</div><div class="label">Processing Queue</div>
+    <svg class="mini-spark" viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="0,10 15,14 30,8 45,18 60,16 75,20 100,16" fill="none" stroke="#c6ff4d" stroke-width="3"/></svg>
+  </div>
+</div>
+
+<div class="glass-panel docs-commandbar">
+  <div class="search-mini"><span>⌕</span><input placeholder="Search your document library..." id="docSearch"></div>
+  <div class="doc-filters"><button class="doc-filter active" data-filter="all">All</button><button class="doc-filter" data-filter="pdf">PDF</button><button class="doc-filter" data-filter="other">Other</button></div>
+  <div class="doc-count"><b id="docVisibleCount">{{ docs|length }}</b> sources</div>
+</div>
+
+<div class="documents-layout">
+  <section class="glass-panel document-library">
+    <div class="library-head"><div><h3>Document Library</h3><span>Operational view of every uploaded source</span></div><span class="library-badge">{{ docs|length }} total</span></div>
+    <div class="document-table-wrap">
+      <table class="document-table"><thead><tr><th>Source</th><th>Type</th><th>Metadata</th><th>Coverage</th><th>Added</th><th></th></tr></thead><tbody id="docList">
+      {% for d in docs %}
+      {% set prog = ([40 + d.chunk_count * 5, 100] | min) %}
+      <tr class="document-row" data-name="{{ d.filename|lower }}" data-type="{{ 'pdf' if d.filename.lower().endswith('.pdf') else 'other' }}">
+        <td><div class="source-cell"><span class="source-icon">{{ '📕' if d.filename.lower().endswith('.pdf') else '📄' }}</span><div><b>{{ d.filename }}</b><small>Knowledge source</small></div></div></td>
+        <td><span class="type-badge">{{ d.filename.rsplit('.',1)[-1]|upper if '.' in d.filename else 'FILE' }}</span></td>
+        <td>
+          <div class="meta-tags">
+            <span class="tag-chip">{{ d.pages }} pages</span>
+            <span class="tag-chip">{{ d.chunk_count }} chunks</span>
+            <span class="tag-chip good">● Indexed</span>
+          </div>
+        </td>
+        <td>
+          <div class="progress-ring-wrap" title="Index coverage">
+            <svg viewBox="0 0 42 42" class="progress-ring">
+              <circle class="ring-bg" cx="21" cy="21" r="17"></circle>
+              <circle class="ring-fg" cx="21" cy="21" r="17" style="stroke-dasharray:{{ (prog/100*106.8)|round(1) }} 106.8"></circle>
+            </svg>
+            <span class="ring-label">{{ prog }}%</span>
+          </div>
+        </td>
+        <td>{{ d.uploaded_at.strftime('%d %b %Y') }}</td>
+        <td>
+          <div class="action-dropdown">
+            <button class="action-dots" data-menu-toggle>⋯</button>
+            <div class="dropdown-menu">
+              <button class="dropdown-item" data-action="manage" data-id="{{ d.id }}">🛠️ Manage</button>
+              <button class="dropdown-item" data-action="reindex" data-id="{{ d.id }}">♻️ Re-index</button>
+              <button class="dropdown-item" data-action="export" data-id="{{ d.id }}">⬇️ Export Chunks</button>
+              <button class="dropdown-item danger del-btn" data-id="{{ d.id }}" title="Delete document">🗑️ Delete</button>
+            </div>
+          </div>
+        </td>
+      </tr>
+      {% else %}<tr><td colspan="6"><div class="kb-empty">No documents yet. Upload a source to populate your library.</div></td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+  </section>
+
+  <aside class="documents-side">
+    <div class="glass-panel doc-insight"><div class="section-kicker">LIBRARY SUMMARY</div><div class="big-stat">{{ docs|length }}</div><b>Knowledge sources</b><p>Each source can contribute pages and chunks to retrieval.</p></div>
+
+    <div class="glass-panel doc-insight kb-health-mini">
+      <div class="section-kicker">KNOWLEDGE HEALTH</div>
+      <div class="kb-health-row"><span>Index coverage</span><strong>{{ stats.documents and 'Ready' or 'Waiting' }}</strong></div>
+      <div class="kb-health-row"><span>Searchable chunks</span><strong>{{ stats.total_chunks }}</strong></div>
+      <div class="kb-health-bar"><span style="width:{{ 100 if stats.documents else 0 }}%"></span></div>
+    </div>
+
+    <div class="glass-panel doc-insight">
+      <div class="section-kicker">CHUNK COVERAGE HEATMAP</div>
+      <div class="coverage-heatmap">
+        {% for d in docs %}
+        {% set prog = ([40 + d.chunk_count * 5, 100] | min) %}
+        <div class="heatmap-cell" style="--lvl:{{ prog }}" title="{{ d.filename }} — {{ prog }}%"></div>
+        {% else %}
+        <span class="muted" style="font-size:.72rem;">No data yet</span>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="glass-panel doc-insight"><div class="section-kicker">QUICK ACTIONS</div><a href="{{ url_for('knowledge_base') }}" class="side-action">📚 Knowledge overview <span>→</span></a><a href="{{ url_for('chunk_explorer') }}" class="side-action">🧩 Inspect chunks <span>→</span></a><a href="{{ url_for('retrieval_explorer') }}" class="side-action">🔎 Test retrieval <span>→</span></a></div>
+    {% if docs %}<button class="qa-btn danger-action" id="qaClear">🗑️ Clear Entire Knowledge Base</button>{% endif %}
+  </aside>
+</div>
+{% endblock %}
+{% block page_scripts %}<script src="{{ url_for('static', filename='js/knowledge_base.js') }}"></script>{% endblock %}

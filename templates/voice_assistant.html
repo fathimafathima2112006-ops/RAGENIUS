@@ -1,0 +1,54 @@
+{% extends "base_app.html" %}
+{% block title %}Voice Assistant · RAGENIUS{% endblock %}
+{% block page_content %}
+<div class="page-header">
+  <h2>🎙️ Voice Assistant</h2>
+  <p>Speak your question in English, Tamil, Tanglish, Hindi, Telugu, Malayalam or Kannada — RAGENIUS listens, understands and reads the answer back.</p>
+</div>
+
+<div class="voice-stage glass-panel">
+  <div class="lang-row" id="voiceLangRow" style="justify-content:center;">
+    <button class="lang-pill active" data-lang="Auto">Auto</button>
+    <button class="lang-pill" data-lang="English">English</button>
+    <button class="lang-pill" data-lang="Tamil">Tamil</button>
+    <button class="lang-pill" data-lang="Tanglish">Tanglish</button>
+    <button class="lang-pill" data-lang="Hindi">Hindi</button>
+    <button class="lang-pill" data-lang="Telugu">Telugu</button>
+    <button class="lang-pill" data-lang="Malayalam">Malayalam</button>
+    <button class="lang-pill" data-lang="Kannada">Kannada</button>
+  </div>
+
+  <div class="voice-orb-wrap">
+    <div class="voice-orb-ring r1"></div>
+    <div class="voice-orb-ring r2"></div>
+    <button class="voice-orb" id="voiceOrbBtn">🎤</button>
+  </div>
+
+  <div class="voice-status" id="voiceStatus">Tap the mic and start speaking</div>
+  <div class="voice-support-note" id="voiceSupportNote">🎙️ Voice works best in Chrome, Edge and supported mobile browsers. If your browser blocks speech recognition, use the text box below.</div>
+
+  <div class="voice-fallback-row">
+    <input id="voiceFallbackInput" type="text" autocomplete="off" placeholder="Or type your question here…" aria-label="Type your voice assistant question">
+    <button class="btn-neon voice-send-btn" id="voiceFallbackSend" type="button">➤ Ask</button>
+  </div>
+
+  <div class="voice-transcript-box hidden" id="voiceTranscriptBox">
+    <div class="label">You said</div>
+    <div class="text" id="voiceTranscriptText"></div>
+  </div>
+
+  <div class="voice-answer-box hidden" id="voiceAnswerBox">
+    <div class="label">🧠 RAGENIUS answers</div>
+    <div class="text" id="voiceAnswerText"></div>
+    <div class="sources-box" id="voiceSourcesBox"></div>
+    <div class="voice-answer-actions">
+      <button class="btn-outline-neon voice-action-btn" id="voiceReplayBtn" type="button">🔊 Read Answer</button>
+      <button class="btn-outline-neon voice-action-btn" id="voiceCopyBtn" type="button">📋 Copy</button>
+      <button class="btn-outline-neon voice-action-btn" id="voiceShareBtn" type="button">↗ Share</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/voice_assistant.js') }}"></script>
+{% endblock %}

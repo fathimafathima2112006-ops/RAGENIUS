@@ -1,0 +1,174 @@
+{% extends "base_app.html" %}
+{% block title %}Retrieval Explorer · RAGENIUS{% endblock %}
+{% block page_content %}
+<div class="rx-page">
+  <div class="rx-hero">
+    <div>
+      <div class="rx-kicker"><span class="rx-live-dot"></span> RAGENIUS · RETRIEVAL INTELLIGENCE</div>
+      <h1>Retrieval <span>Explorer</span></h1>
+      <p>Inspect how a question is understood, expanded, searched, reranked and gated before evidence reaches the AI.</p>
+    </div>
+    <div class="rx-hero-badges">
+      <span>⚡ Hybrid Retrieval</span><span>🎯 Reranking</span><span>🛡️ Relevance Gate</span>
+    </div>
+  </div>
+
+  <section class="rx-query-card glass-panel">
+    <div class="rx-query-title"><div class="rx-query-icon">⌕</div><div><strong>Query Lab</strong><small>Run one question through the complete retrieval diagnostic.</small></div></div>
+    <form method="post" class="rx-query-form">
+      <input name="query" value="{{ query }}" placeholder="Ask a question to inspect retrieval…" autocomplete="off" autofocus>
+      <button class="btn-neon rx-analyze-btn" type="submit">Analyze Retrieval <span>↗</span></button>
+    </form>
+    {% if query %}<div class="rx-query-foot"><span>Query inspected</span><b>“{{ query }}”</b><span class="rx-query-status">● Diagnostic complete</span></div>{% endif %}
+  </section>
+
+  {% if query and meta.skipped %}
+  <section class="rx-skip-banner glass-panel">
+    <div class="rx-skip-icon">✦</div><div><strong>Retrieval intentionally skipped</strong><p>{{ meta.skip_reason }}</p><small>Intent: {{ meta.query_intent|join(' · ') }}</small></div>
+  </section>
+  {% endif %}
+
+  {% if query %}
+  <div class="rx-dashboard-grid">
+    <section class="rx-card glass-panel rx-vector-card">
+      <div class="rx-card-head"><div><span class="rx-card-eyebrow">EMBEDDING SPACE</span><h3>Vector Space Visualization</h3></div><span class="rx-pill">{{ results|length }} selected</span></div>
+      <div class="rx-plot-wrap">
+        <div class="rx-plot-grid"></div>
+        <div class="rx-axis rx-axis-x"></div><div class="rx-axis rx-axis-y"></div>
+        <div class="rx-axis-label rx-x-label">semantic similarity →</div><div class="rx-axis-label rx-y-label">vector space</div>
+        <div id="rxScatter" class="rx-scatter"></div>
+        <div class="rx-query-vector"><span>Q</span></div>
+        <div class="rx-legend"><span><i class="dot query"></i> Query</span><span><i class="dot selected"></i> Selected chunks</span><span><i class="dot rejected"></i> Rejected</span></div>
+      </div>
+    </section>
+
+    <section class="rx-card glass-panel rx-ranked-card">
+      <div class="rx-card-head"><div><span class="rx-card-eyebrow">TOP CANDIDATES</span><h3>Ranked Chunks</h3></div><span class="rx-pill cyan">Top {{ [results|length, 10]|min }}</span></div>
+      <div class="rx-table-wrap">
+        <table class="rx-table">
+          <thead><tr><th>Rank</th><th>Score</th><th>Document</th><th>Chunk content</th><th>Metadata</th><th>Feedback</th></tr></thead>
+          <tbody>
+          {% for r in results[:10] %}
+            <tr class="rx-result-row" data-score="{{ r.rerank_score }}" data-doc="{{ r.doc.filename|lower }}" data-type="{{ r.doc.file_type|lower }}">
+              <td><span class="rx-rank">{{ loop.index }}</span></td>
+              <td><div class="rx-score-cell"><strong>{{ '%.1f'|format(r.rerank_score*100) }}%</strong><div class="rx-mini-progress"><i style="width:{{ [r.rerank_score*100,100]|min }}%"></i></div></div></td>
+              <td><div class="rx-doc"><span class="pdf-icon">PDF</span><span title="{{ r.doc.filename }}">{{ r.doc.filename }}</span></div></td>
+              <td><div class="rx-snippet">{{ r.chunk.text[:150] }}{% if r.chunk.text|length > 150 %}…{% endif %}</div></td>
+              <td><span class="rx-meta-tag">P{{ r.chunk.page }}</span><span class="rx-meta-tag">C{{ r.chunk.chunk_index + 1 }}</span></td>
+              <td><div class="rx-feedback"><button type="button" aria-label="Useful" title="Useful">👍</button><button type="button" aria-label="Not useful" title="Not useful">👎</button></div></td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6" class="rx-no-results">No chunks passed the relevance gate.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="rx-card glass-panel rx-chart-card">
+      <div class="rx-card-head"><div><span class="rx-card-eyebrow">RELEVANCE DISTRIBUTION</span><h3>Similarity Scores · Top 10</h3></div><span class="rx-pill purple">Rerank</span></div>
+      <div id="rxBars" class="rx-bars">
+        {% for r in results[:10] %}<div class="rx-bar-col"><div class="rx-bar-value">{{ '%.0f'|format(r.rerank_score*100) }}</div><div class="rx-bar" style="height:{{ [r.rerank_score*100,8]|max }}%"></div><small>#{{ loop.index }}</small></div>{% else %}<div class="rx-chart-empty">Run a relevant query to populate the score distribution.</div>{% endfor %}
+      </div>
+    </section>
+
+    <section class="rx-card glass-panel rx-pipeline-card">
+      <div class="rx-card-head"><div><span class="rx-card-eyebrow">OBSERVABILITY</span><h3>Retrieval Pipeline Diagnostics</h3></div><span class="rx-pill green">Live trace</span></div>
+      <div class="rx-flow">
+        <div class="rx-flow-node"><span>01</span><b>Query Expansion</b><small>{{ meta.variants|length }} variants</small></div><i>→</i>
+        <div class="rx-flow-node"><span>02</span><b>Dense + Sparse</b><small>Vector + lexical</small></div><i>→</i>
+        <div class="rx-flow-node"><span>03</span><b>Hybrid Reranker</b><small>{{ meta.candidate_count or 0 }} candidates</small></div><i>→</i>
+        <div class="rx-flow-node final"><span>04</span><b>Top Candidates</b><small>{{ results|length }} passed gate</small></div>
+      </div>
+      <div class="rx-diagnostics"><div><span>Intent</span><b>{{ meta.query_intent|join(' · ') }}</b></div><div><span>Strategy</span><b>{{ meta.strategy }}</b></div><div><span>Rejected</span><b>{{ meta.rejected_count or 0 }}</b></div><div><span>Topic query</span><b>{{ meta.topic_query or query }}</b></div></div>
+    </section>
+
+    <aside class="rx-card glass-panel rx-filter-card">
+      <div class="rx-card-head"><div><span class="rx-card-eyebrow">EXPLORATION CONTROLS</span><h3>Filters</h3></div><button type="button" id="rxReset" class="rx-reset">Reset</button></div>
+      <div class="rx-filter-group"><label>Document Type</label><label class="rx-check"><input type="checkbox" class="rx-type" value="pdf" checked><span></span> PDF</label><label class="rx-check"><input type="checkbox" class="rx-type" value="docx"><span></span> Word</label><label class="rx-check"><input type="checkbox" class="rx-type" value="xlsx"><span></span> Excel</label></div>
+      <div class="rx-filter-group"><label>Date Range</label><select id="rxDate"><option>Any date</option><option>Last 7 days</option><option>Last 30 days</option><option>Last 90 days</option></select><small class="rx-filter-note">Date filtering becomes active when document timestamps are available in the retrieval index.</small></div>
+      <div class="rx-filter-group"><div class="rx-threshold-row"><label for="rxThreshold">Minimum Relevance</label><strong id="rxThresholdValue">0%</strong></div><input id="rxThreshold" type="range" min="0" max="100" value="0" step="1"><div class="rx-range-labels"><span>0%</span><span>50%</span><span>100%</span></div></div>
+      <div class="rx-filter-summary"><span>Showing</span><strong id="rxVisibleCount">{{ results|length }}</strong><span>of {{ results|length }} selected chunks</span></div>
+    </aside>
+  </div>
+
+  <section class="rx-lower-grid">
+    <div class="rx-card glass-panel rx-metrics-card">
+      <div class="rx-card-head"><div><span class="rx-card-eyebrow">RETRIEVAL HEALTH</span><h3>Diagnostic Metrics</h3></div></div>
+      <div class="rx-metric-grid">
+        <div><span>Retrieval Quality Rate</span><strong>{% if meta.retrieval_quality %}{{ '%.2f'|format(meta.retrieval_quality) }}%{% else %}—{% endif %}</strong><small>average confidence</small></div><div><span>Average Chunk Length</span><strong>{% if meta.avg_chunk_length %}{{ meta.avg_chunk_length }}{% else %}—{% endif %}</strong><small>characters</small></div><div><span>Selected</span><strong>{{ results|length }}</strong><small>passed gate</small></div><div><span>Rejected</span><strong>{{ meta.rejected_count or 0 }}</strong><small>filtered out</small></div>
+      </div>
+    </div>
+    <div class="rx-card glass-panel rx-score-card">
+      <div class="rx-card-head"><div><span class="rx-card-eyebrow">SCORING BREAKDOWN</span><h3>Evidence Score Layers</h3></div></div>
+      {% if results %}
+      {% set top = results[0] %}
+      <div class="rx-score-layers"><div><span>BM25 / lexical</span><b>{{ '%.4f'|format(top.bm25_score) }}</b><i style="width:{{ [top.bm25_score*100,100]|min }}%"></i></div><div><span>Vector-like</span><b>{{ '%.4f'|format(top.vector_score) }}</b><i style="width:{{ [top.vector_score*100,100]|min }}%"></i></div><div><span>Hybrid</span><b>{{ '%.4f'|format(top.score) }}</b><i style="width:{{ [top.score*100,100]|min }}%"></i></div><div><span>Rerank</span><b>{{ '%.4f'|format(top.rerank_score) }}</b><i style="width:{{ [top.rerank_score*100,100]|min }}%"></i></div></div>
+      {% else %}<div class="rx-no-evidence">No evidence score available for this query.</div>{% endif %}
+    </div>
+  </section>
+
+  {% if meta.rejected %}
+  <section class="rx-card glass-panel rx-rejected-pro">
+    <div class="rx-card-head"><div><span class="rx-card-eyebrow">RELEVANCE GATE</span><h3>Rejected / Below-Gate Candidates</h3></div><span class="rx-pill danger">{{ meta.rejected_count or 0 }} rejected</span></div>
+    <div class="rx-rejected-grid">{% for r in meta.rejected[:8] %}<details><summary><span>{{ r.document }}</span><b>{{ '%.1f'|format(r.rerank*100) }}%</b></summary><p>Page {{ r.page }} · Chunk {{ r.chunk }} — {{ r.text[:180] }}{% if r.text|length > 180 %}…{% endif %}</p></details>{% endfor %}</div>
+  </section>
+  {% endif %}
+  {% elif not query %}
+  <div class="rx-empty glass-panel"><div class="rx-empty-art">⌁</div><h2>Ready to inspect retrieval</h2><p>Enter a question above and RAGENIUS will show intent, query expansion, hybrid evidence, reranking, relevance gating and diagnostics.</p></div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+(() => {
+  const rows = [...document.querySelectorAll('.rx-result-row')];
+  const threshold = document.getElementById('rxThreshold');
+  const thresholdValue = document.getElementById('rxThresholdValue');
+  const visible = document.getElementById('rxVisibleCount');
+  const types = [...document.querySelectorAll('.rx-type')];
+  const reset = document.getElementById('rxReset');
+  const scatter = document.getElementById('rxScatter');
+
+  function applyFilters() {
+    const min = Number(threshold?.value || 0) / 100;
+    const selectedTypes = types.filter(x => x.checked).map(x => x.value);
+    let count = 0;
+    rows.forEach((row, i) => {
+      const score = Number(row.dataset.score || 0);
+      const type = row.dataset.type || '';
+      const typeOK = selectedTypes.length === 0 || selectedTypes.includes(type) || (type === 'pdf' && selectedTypes.includes('pdf'));
+      const show = score >= min && typeOK;
+      row.style.display = show ? '' : 'none';
+      if (show) count++;
+    });
+    if (thresholdValue) thresholdValue.textContent = `${Math.round(min*100)}%`;
+    if (visible) visible.textContent = count;
+  }
+  threshold?.addEventListener('input', applyFilters);
+  types.forEach(x => x.addEventListener('change', applyFilters));
+  reset?.addEventListener('click', () => { if (threshold) threshold.value = 0; types.forEach(x => x.checked = x.value === 'pdf'); applyFilters(); });
+  applyFilters();
+
+  // Lightweight 3D-like scatter visualization; values come from the real ranked chunks.
+  if (scatter && rows.length) {
+    const pts = rows.map((r,i) => ({score:Number(r.dataset.score||0), i}));
+    pts.forEach((p) => {
+      const el = document.createElement('span');
+      el.className = 'rx-point selected';
+      const angle = p.i * 1.71;
+      const radius = 12 + (1-p.score) * 28;
+      const x = 50 + Math.cos(angle) * radius + (p.score-.5)*18;
+      const y = 50 + Math.sin(angle) * radius * .68 - p.score*22;
+      const z = 0.7 + p.score*.6;
+      el.style.left = `${Math.max(6,Math.min(94,x))}%`;
+      el.style.top = `${Math.max(8,Math.min(88,y))}%`;
+      el.style.transform = `translate(-50%,-50%) scale(${z})`;
+      el.title = `Rank #${p.i+1} · ${(p.score*100).toFixed(1)}%`;
+      scatter.appendChild(el);
+    });
+  }
+})();
+</script>
+{% endblock %}

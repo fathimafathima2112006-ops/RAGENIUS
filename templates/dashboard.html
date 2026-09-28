@@ -1,0 +1,11 @@
+{% extends "base_app.html" %}
+{% block title %}Dashboard · RAGENIUS{% endblock %}
+{% block page_content %}
+{% include "partials/chat_widget.html" %}
+{% endblock %}
+{% block page_scripts %}
+<script>
+  window.RAGENIUS_LOAD_CONVERSATION_ID = {{ load_conv if load_conv is not none else 'null' }};
+</script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,4 @@
+{% extends "base_app.html" %}{% block title %}Citation · {{ doc.filename }}{% endblock %}{% block page_content %}
+<div class="page-header"><h2>📌 Citation Viewer</h2><p>{{ doc.filename }} · Page {{ page }} · Chunk {{ chunk.chunk_index + 1 if chunk else '—' }}</p></div>
+<div class="citation-grid"><div class="glass-panel panel-box"><iframe class="pdf-frame" src="{{ url_for('document_file',doc_id=doc.id) }}#page={{ page }}"></iframe></div><div class="glass-panel panel-box"><h3>Highlighted Evidence</h3>{% if chunk %}<div class="highlight-text">{{ chunk.text }}</div>{% else %}<div class="muted">No chunk text available.</div>{% endif %}<div class="citation-note">The PDF opens directly at the cited page. The evidence excerpt is shown alongside it for precise source verification.</div></div></div>
+{% endblock %}

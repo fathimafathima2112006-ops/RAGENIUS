@@ -1,0 +1,71 @@
+{% extends "base_app.html" %}
+{% block title %}Knowledge Base · RAGENIUS{% endblock %}
+{% block page_content %}
+<div class="page-header kb-overview-head">
+  <div>
+    <div class="eyebrow">KNOWLEDGE WORKSPACE</div>
+    <h2 data-i18n="knowledge_base">📚 Knowledge Base</h2>
+    <p>Manage how RAGENIUS turns your files into searchable knowledge. Upload, index, inspect coverage, and jump to retrieval diagnostics.</p>
+  </div>
+  <div class="kb-head-actions">
+    <button class="btn-mini" id="uploadBtn">＋ Add Knowledge</button>
+    <input type="file" id="fileInput" accept="*/*" class="hidden">
+    <a class="btn-mini secondary" href="{{ url_for('retrieval_explorer') }}">🔎 Open Retrieval Explorer</a>
+  </div>
+</div>
+
+<div class="stats-row kb-stats">
+  <div class="glass-panel stat-card c-blue"><div class="top"><div class="ic">📚</div></div><div class="val">{{ stats.documents }}</div><div class="label">Knowledge Sources</div></div>
+  <div class="glass-panel stat-card c-purple"><div class="top"><div class="ic">🧩</div></div><div class="val">{{ stats.total_chunks }}</div><div class="label">Indexed Chunks</div></div>
+  <div class="glass-panel stat-card c-green"><div class="top"><div class="ic">📖</div></div><div class="val">{{ stats.total_pages }}</div><div class="label">Analyzed Pages</div></div>
+  <div class="glass-panel stat-card c-orange"><div class="top"><div class="ic">💾</div></div><div class="val">{{ stats.storage_mb }}</div><div class="label">Storage (MB)</div></div>
+</div>
+
+<div class="kb-overview-grid">
+  <section class="glass-panel kb-hero-card">
+    <div class="section-kicker">INGESTION PIPELINE</div>
+    <h3>Build a knowledge layer your AI can actually use</h3>
+    <p>RAGENIUS processes uploaded files into document text, chunks, and retrieval-ready evidence. Use this page for the knowledge overview; use <strong>Documents</strong> for file-level management.</p>
+    <div class="kb-pipeline">
+      <div class="kb-step"><span>01</span><b>Upload</b><small>Bring in source files</small></div>
+      <div class="kb-arrow">→</div>
+      <div class="kb-step"><span>02</span><b>Process</b><small>Extract &amp; chunk content</small></div>
+      <div class="kb-arrow">→</div>
+      <div class="kb-step"><span>03</span><b>Index</b><small>Prepare retrieval signals</small></div>
+      <div class="kb-arrow">→</div>
+      <div class="kb-step"><span>04</span><b>Retrieve</b><small>Find useful evidence</small></div>
+    </div>
+  </section>
+
+  <aside class="glass-panel kb-health-card">
+    <div class="section-kicker">KNOWLEDGE HEALTH</div>
+    <div class="kb-health-row"><span>Index coverage</span><strong>{{ stats.documents and 'Ready' or 'Waiting' }}</strong></div>
+    <div class="kb-health-row"><span>Searchable chunks</span><strong>{{ stats.total_chunks }}</strong></div>
+    <div class="kb-health-row"><span>Pages processed</span><strong>{{ stats.total_pages }}</strong></div>
+    <div class="kb-health-bar"><span style="width:{{ 100 if stats.documents else 0 }}%"></span></div>
+    <small>{{ 'Your knowledge sources are available for retrieval.' if stats.documents else 'Add your first source to start building the knowledge base.' }}</small>
+  </aside>
+
+  <section class="glass-panel kb-capabilities">
+    <div class="section-kicker">WORKSPACES</div>
+    <div class="kb-cap-grid">
+      <a href="{{ url_for('documents_page') }}" class="kb-cap"><span>📄</span><div><b>Documents</b><small>Files, metadata, status &amp; actions</small></div><i>→</i></a>
+      <a href="{{ url_for('chunk_explorer') }}" class="kb-cap"><span>🧩</span><div><b>Chunk Explorer</b><small>Inspect indexed text units</small></div><i>→</i></a>
+      <a href="{{ url_for('retrieval_explorer') }}" class="kb-cap"><span>🔎</span><div><b>Retrieval Explorer</b><small>Trace ranking and relevance</small></div><i>→</i></a>
+      <a href="{{ url_for('analytics_page') }}" class="kb-cap"><span>📊</span><div><b>Analytics &amp; Evaluation</b><small>Review usage and quality signals</small></div><i>→</i></a>
+    </div>
+  </section>
+
+  <section class="glass-panel kb-recent">
+    <div class="head"><div><div class="section-kicker">RECENT SOURCES</div><h3>Latest knowledge activity</h3></div><a href="{{ url_for('documents_page') }}">View all →</a></div>
+    {% for d in docs[:5] %}
+      <div class="kb-recent-row"><span class="file-icon">📄</span><div><b>{{ d.filename }}</b><small>{{ d.pages }} pages · {{ d.chunk_count }} chunks</small></div><span class="status-pill">Indexed</span></div>
+    {% else %}
+      <div class="kb-empty">No knowledge sources yet. Add a document to start.</div>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/knowledge_base.js') }}"></script>
+{% endblock %}

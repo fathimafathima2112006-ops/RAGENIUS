@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="app-shell">
+
+  <div class="topbar">
+    <button class="icon-btn hamburger" id="sidebarToggle" title="Toggle menu" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="brand">
+      <span class="brand-brain brand-logo-mark">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M30 10C20 6 10 13 10 24c0 3 1 6 3 8-4 3-6 7-6 12 0 9 7 15 16 15 3 0 6-1 8-3V13c0-1-1-2-1-3Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+          <path d="M34 10c10-4 20 3 20 14 0 3-1 6-3 8 4 3 6 7 6 12 0 9-7 15-16 15-3 0-6-1-8-3V13c0-1 1-2 1-3Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <div>
+        <span class="brand-gradient">RAGENIUS</span>
+        <small data-i18n="tagline">Your Knowledge. Our Intelligence.</small>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="icon-btn theme-toggle-btn" id="themeToggle" title="Toggle light / dark theme" aria-label="Toggle light / dark theme">☀️</button>
+      
+      <!-- USER PROFILE CHIP -->
+      <div class="user-chip">
+        <a href="{{ url_for('settings_page') }}" class="avatar-ring" title="Profile / Settings">
+          {% if current_user.profile_photo_url %}
+            <img class="header-profile-photo" id="headerAvatarImg" src="{{ current_user.profile_photo_url }}" alt="{{ current_user.username }}">
+          {% else %}
+            <span class="header-profile-photo avatar-letter" id="headerAvatarLetter">{{ current_user.username[0]|upper }}</span>
+          {% endif %}
+        </a>
+        <div class="meta">
+          <div class="meta-name">{{ current_user.username }}</div>
+          <small>{{ '⭐ Premium User' if current_user.is_premium else 'Free Plan' }}</small>
+        </div>
+        <a href="{{ url_for('logout') }}" class="icon-btn" title="Logout" data-i18n-title="logout">🚪</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout" id="appLayout">
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation" style="pointer-events:auto;">
+      <div class="side-section-label" data-i18n="chat_section">CHAT</div>
+      <a href="{{ url_for('dashboard') }}" data-route="/dashboard" onclick="return RAGENIUS_NAV(this,event)" class="nav-item {{ 'active' if active=='dashboard' else '' }}" data-i18n-aria="dashboard">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span data-i18n="dashboard">Chat</span>
+      </a>
+
+      <div class="side-section-label" data-i18n="knowledge_section">KNOWLEDGE</div>
+      <a href="{{ url_for('knowledge_base') }}" data-route="/knowledge-base" onclick="return RAGENIUS_NAV(this,event)" class="nav-item {{ 'active' if active=='knowledge_base' else '' }}">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span><span data-i18n="knowledge_base">Knowledge Base</span>
+      </a>
+      <a href="{{ url_for('documents_page') }}" data-route="/documents" onclick="return RAGENIUS_NAV(this,event)" class="nav-item {{ 'active' if active=='documents' else '' }}">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg></span><span data-i18n="documents">Documents</span>
+      </a>
+      <a href="{{ url_for('chunk_explorer') }}" data-route="/chunk-explorer" onclick="return RAGENIUS_NAV(this,event)" class="nav-item {{ 'active' if active=='chunks' else '' }}">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span data-i18n="chunk_explorer">Chunk Explorer</span>
+      </a>
+      <a href="{{ url_for('retrieval_explorer') }}" data-route="/retrieval-explorer" onclick="return RAGENIUS_NAV(this,event)" class="nav-item {{ 'active' if active=='retrieval' else '' }}">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span><span data-i18n="retrieval_explorer">Retrieval Explorer</span>
+      </a>
+
+      <div class="side-section-label" data-i18n="insights_section">INSIGHTS</div>
+      <a href="{{ url_for('analytics_page') }}" data-route="/analytics" onclick="return RAGENIUS_NAV(this,event)" class="nav-item {{ 'active' if active=='analytics' else '' }}">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M8 17v-6M13 17V7M18 17v-3"/></svg></span><span data-i18n="analytics">Analytics &amp; Evaluation</span>
+      </a>
+      <a href="{{ url_for('conversations_page') }}" data-route="/conversations" onclick="return RAGENIUS_NAV(this,event)" class="nav-item {{ 'active' if active=='conversations' else '' }}">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span data-i18n="chat_history">Chat History</span>
+      </a>
+
+      <div class="side-section-label" data-i18n="system_section">SYSTEM</div>
+      <a href="{{ url_for('settings_page') }}" data-route="/settings" onclick="return RAGENIUS_NAV(this,event)" class="nav-item {{ 'active' if active=='settings' else '' }}">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span><span data-i18n="settings">Settings</span>
+      </a>
+    </aside>
+
+    <main class="page-content">
+      {% block page_content %}{% endblock %}
+    </main>
+  </div>
+
+  <div class="footer-bar">
+    <span data-i18n="footer_brand">RAGENIUS | AI Powered Knowledge Assistant</span>
+    <span><span class="live-dot">●</span> <span data-i18n="system_online">System Online</span> &nbsp; v2.3.0</span>
+  </div>
+</div>
+
+
+<nav class="bottom-nav" aria-label="Quick navigation">
+  <a href="{{ url_for('dashboard') }}" class="{{ 'active' if active=='dashboard' else '' }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Chat</span></a>
+  <a href="{{ url_for('documents_page') }}" class="{{ 'active' if active=='documents' else '' }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg><span>Docs</span></a>
+  <a href="{{ url_for('knowledge_base') }}" class="{{ 'active' if active=='knowledge_base' else '' }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span>Library</span></a>
+  <a href="{{ url_for('conversations_page') }}" class="{{ 'active' if active=='conversations' else '' }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>History</span></a>
+  <a href="{{ url_for('settings_page') }}" class="{{ 'active' if active=='settings' else '' }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Settings</span></a>
+</nav>
+
+<div id="toast" style="position:fixed;bottom:24px;right:24px;z-index:999;"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function(){
+  window.RAGENIUS_NAV = function(link, event){
+    if (event) {
+      if (event.button !== undefined && event.button !== 0) return true;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return true;
+      event.preventDefault();
+    }
+    var target = link && (link.dataset.route || link.getAttribute('href'));
+    if (!target) return true;
+    try { document.body.classList.remove('nav-open'); } catch(e) {}
+    window.location.assign(target);
+    return false;
+  };
+})();
+</script>
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app_shell.js') }}"></script>
+{% block page_scripts %}{% endblock %}
+{% endblock %}

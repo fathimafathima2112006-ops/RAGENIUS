@@ -1,1 +1,21 @@
-
+{% extends "base_app.html" %}
+{% block title %}Analytics & Evaluation · RAGENIUS{% endblock %}
+{% block page_content %}
+<div class="page-header"><h2>📊 <span data-i18n="analytics">Analytics &amp; Evaluation</span></h2><p>Enterprise-style RAG observability: usage, latency, confidence and RAG evaluation.</p></div>
+<div class="stats-row">
+  <div class="stat-card c-blue"><div class="top"><span class="ic">📄</span></div><div class="val">{{ stats.documents }}</div><div class="label">Documents</div></div>
+  <div class="stat-card c-purple"><div class="top"><span class="ic">💬</span></div><div class="val">{{ stats.questions_asked }}</div><div class="label">Queries</div></div>
+  <div class="stat-card c-green"><div class="top"><span class="ic">⚡</span></div><div class="val">{{ stats.avg_latency_ms }} ms</div><div class="label">Avg Response</div></div>
+  <div class="stat-card c-orange"><div class="top"><span class="ic">🎯</span></div><div class="val">{{ stats.avg_confidence }}%</div><div class="label">Confidence</div></div>
+</div>
+<div class="analytics-grid">
+  <div class="glass-panel panel-box"><h3>⚡ Performance</h3><div class="chart-wrap"><canvas id="latencyChart" height="180"></canvas></div></div>
+  <div class="glass-panel panel-box"><h3>🎯 Confidence</h3><div class="chart-wrap"><canvas id="confidenceChart" height="180"></canvas></div></div>
+</div>
+<div class="glass-panel panel-box" style="margin-top:18px;"><h3>🧪 RAG Evaluation <small style="color:var(--text-dim);font-size:.65rem;">(local heuristic diagnostics)</small></h3><div class="ragas-grid"><div><b id="faithfulnessMetric">—</b><span>Faithfulness</span></div><div><b id="relevancyMetric">—</b><span>Answer Relevancy</span></div><div><b id="precisionMetric">—</b><span>Context Precision</span></div><div><b id="recallMetric">—</b><span>Context Recall</span></div></div></div>
+<div class="glass-panel panel-box" style="margin-top:18px;"><h3>💳 Latency & Token Cost</h3><div class="ragas-grid"><div><b id="inputTokens">—</b><span>Input Tokens</span></div><div><b id="outputTokens">—</b><span>Output Tokens</span></div><div><b id="estimatedCost">—</b><span>Estimated Cost</span></div><div><b id="totalLatency">—</b><span>Recent Avg</span></div></div></div>
+<div class="glass-panel panel-box" style="margin-top:18px;"><h3>⬇️ Export</h3><p class="muted">Conversation exports are available from Chat History. Retrieval Explorer exports JSON and Markdown directly from its workspace.</p></div>
+<div class="glass-panel panel-box" style="margin-top:18px;"><h3>👍👎 User Feedback</h3><div class="feedback-summary"><div><b>{{ stats.feedback_positive }}</b><span>Helpful</span></div><div><b>{{ stats.feedback_total - stats.feedback_positive }}</b><span>Needs improvement</span></div><div><b>{{ stats.feedback_total }}</b><span>Total ratings</span></div></div></div>
+<div class="glass-panel panel-box" style="margin-top:18px;"><h3>🧪 Retrieval / LLM Events</h3><div class="event-table-wrap"><table class="answer-table"><thead><tr><th>Query</th><th>Retrieval</th><th>LLM</th><th>Confidence</th><th>Sources</th><th>Time</th></tr></thead><tbody id="analyticsEvents"></tbody></table></div></div>
+{% endblock %}
+{% block page_scripts %}<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="{{ url_for('static', filename='js/analytics.js') }}"></script>{% endblock %}

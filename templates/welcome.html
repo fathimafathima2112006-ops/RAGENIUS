@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}RAGENIUS · AI Powered Knowledge Assistant{% endblock %}
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<div class="premium-welcome">
+  <div class="premium-topbar">
+    <a class="premium-logo" href="{{ url_for('welcome') }}" aria-label="RAGENIUS home">
+      <span class="brain-logo-wrap">
+        <svg class="brain-logo" viewBox="0 0 80 80" aria-hidden="true">
+          <defs>
+            <linearGradient id="brainA" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#22e8ff"/><stop offset="48%" stop-color="#7c5cff"/><stop offset="100%" stop-color="#ff35d8"/>
+            </linearGradient>
+            <filter id="brainGlow"><feGaussianBlur stdDeviation="1.7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <path d="M39 13c-8-9-23-4-24 8-8 1-12 9-9 17-6 8-1 20 9 21 1 10 14 14 21 7l3-4V13Z" fill="none" stroke="url(#brainA)" stroke-width="3.2" filter="url(#brainGlow)"/>
+          <path d="M41 13c8-9 23-4 24 8 8 1 12 9 9 17 6 8 1 20-9 21-1 10-14 14-21 7l-3-4V13Z" fill="none" stroke="url(#brainA)" stroke-width="3.2" filter="url(#brainGlow)"/>
+          <path d="M40 11v56M22 27c6-2 8 4 4 7m-8 9c7-3 11 2 7 8m15-18c-5-4-8-1-7 4m-1 11c6-5 10-1 8 5M58 27c-6-2-8 4-4 7m8 9c-7-3-11 2-7 8M41 30c5-4 8-1 7 4m1 11c-6-5-10-1-8 5" fill="none" stroke="url(#brainA)" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span><strong>RAGENIUS</strong><small>AI POWERED KNOWLEDGE ASSISTANT</small></span>
+    </a>
+    <div class="premium-top-actions">
+      <button class="mini-pill" type="button">🌐 English⌄</button>
+      <button class="mini-icon" type="button" aria-label="Theme">☼</button>
+    </div>
+  </div>
+
+  <main class="premium-grid">
+    <section class="premium-hero">
+      <div class="eyebrow"><span></span> THINK · SEARCH · LEARN · GROW</div>
+      <h1>Welcome</h1>
+      <p class="hero-line">Your Knowledge.<br><b>Our Intelligence.</b></p>
+      <p class="hero-copy">Upload your PDFs, ask anything, and get accurate answers grounded in your own documents — powered by advanced AI and Groq.</p>
+
+      <div class="feature-grid">
+        <div class="feature-card"><span>▣</span><strong>PDF RAG</strong><small>Smart Search</small></div>
+        <div class="feature-card"><span>◉</span><strong>Voice AI</strong><small>Speak & Listen</small></div>
+        <div class="feature-card"><span>◎</span><strong>Multi-Language</strong><small>EN · தமிழ் · Tanglish</small></div>
+        <div class="feature-card"><span>ϟ</span><strong>Groq Powered</strong><small>Fast & Accurate</small></div>
+      </div>
+
+      <div class="quote-line"><span>“</span><p>Knowledge isn't just information...<br><b>It's a superpower.</b></p></div>
+    </section>
+
+    <section class="ai-scene" aria-label="RAGENIUS AI visualization">
+      <div class="scene-halo"></div>
+      <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+      <div class="scene-card card-pdf"><span>PDF</span><small>DOCUMENT</small></div>
+      <div class="scene-card card-search"><span>⌕</span><small>SEARCH</small></div>
+      <div class="scene-card card-answer"><b>ANSWER</b><i></i><i></i><i></i></div>
+      <div class="scene-card card-ai"><span>AI</span><small>RAG CORE</small></div>
+      <div class="scene-card card-light"><span>✦</span><small>INSIGHT</small></div>
+
+      <div class="brain-pedestal">
+        <div class="energy-ring ring-a"></div><div class="energy-ring ring-b"></div>
+        <div class="brain-glow"></div>
+        <svg class="hero-brain" viewBox="0 0 320 280" aria-hidden="true">
+          <defs>
+            <linearGradient id="heroBrain" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#20eaff"/><stop offset="50%" stop-color="#7b5cff"/><stop offset="100%" stop-color="#ff2dd5"/></linearGradient>
+            <filter id="heroGlow"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <path d="M157 35c-26-26-72-13-76 22-28-2-46 28-32 51-27 21-11 63 23 65-1 34 39 51 62 28l23-25V35Z" fill="none" stroke="url(#heroBrain)" stroke-width="10" filter="url(#heroGlow)"/>
+          <path d="M163 35c26-26 72-13 76 22 28-2 46 28 32 51 27 21 11 63-23 65 1 34-39 51-62 28l-23-25V35Z" fill="none" stroke="url(#heroBrain)" stroke-width="10" filter="url(#heroGlow)"/>
+          <path d="M160 27v190M110 71c22-10 37 8 22 23m-36 23c30-13 47 7 28 29m39-65c-18-15-35-5-29 15m3 31c22-19 39-5 28 16M210 71c-22-10-37 8-22 23m36 23c-30-13-47 7-28 29m-39-65c18-15 35-5 29 15m-3 31c-22-19-39-5-28 16" fill="none" stroke="url(#heroBrain)" stroke-width="7" stroke-linecap="round"/>
+          <circle cx="160" cy="218" r="11" fill="#22e8ff"/><circle cx="160" cy="218" r="20" fill="none" stroke="#22e8ff" opacity=".35"/>
+        </svg>
+        <div class="base-platform"></div>
+      </div>
+      <div class="scene-caption"><b>RAGENIUS CORE</b><span>Retrieve · Reason · Respond</span></div>
+    </section>
+
+    <section class="premium-login">
+      <div class="login-glow"></div>
+      <div class="login-inner">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}<div class="premium-flashes">{% for cat, msg in messages %}<div class="premium-flash">{{ msg }}</div>{% endfor %}</div>{% endif %}
+        {% endwith %}
+        <div class="login-brand-mark">
+          <span class="brain-logo-wrap small" aria-label="RAGENIUS logo">
+            <svg class="brain-logo" viewBox="0 0 80 80" aria-hidden="true">
+              <defs><linearGradient id="loginBrainGradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22e8ff"/><stop offset="50%" stop-color="#7c5cff"/><stop offset="100%" stop-color="#ff35d8"/></linearGradient></defs>
+              <path d="M39 13c-8-9-23-4-24 8-8 1-12 9-9 17-6 8-1 20 9 21 1 10 14 14 21 7l3-4V13Z" fill="none" stroke="url(#loginBrainGradient)" stroke-width="3.2" stroke-linecap="round"/>
+              <path d="M41 13c8-9 23-4 24 8 8 1 12 9 9 17 6 8 1 20-9 21-1 10-14 14-21 7l-3-4V13Z" fill="none" stroke="url(#loginBrainGradient)" stroke-width="3.2" stroke-linecap="round"/>
+              <path d="M40 11v56M22 27c6-2 8 4 4 7m-8 9c7-3 11 2 7 8m15-18c-5-4-8-1-7 4m-1 11c6-5 10-1 8 5M58 27c-6-2-8 4-4 7m8 9c-7-3-11 2-7 8M41 30c5-4 8-1 7 4m1 11c-6-5-10-1-8 5" fill="none" stroke="url(#loginBrainGradient)" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <div><strong>RAGENIUS</strong><small>CONTINUE YOUR KNOWLEDGE JOURNEY</small></div>
+        </div>
+        <h2>Login to your account</h2>
+        <p class="login-sub">Access your personal AI knowledge workspace.</p>
+
+        <form method="POST" action="{{ url_for('login') }}" class="premium-form">
+          <label class="premium-field"><span>✉</span><input type="text" name="identifier" placeholder="Username or Email" required autocomplete="username"></label>
+          <label class="premium-field"><span>⌑</span><input type="password" name="password" id="pw" placeholder="Password" required autocomplete="current-password"><button type="button" onclick="togglePw()" aria-label="Show password">◉</button></label>
+          <div class="login-options"><label><input type="checkbox" name="remember"> Remember me</label><a href="#">Forgot password?</a></div>
+          <button class="premium-login-btn" type="submit">Login <b>→</b></button>
+        </form>
+
+        <div class="or-line"><span>OR</span></div>
+        <a href="{{ url_for('register') }}" class="premium-create"><span>♙</span> Create Account</a>
+        <div class="trust-row"><span>◈ Secure</span><span>ϟ Fast</span><span>✦ Powered by Groq</span></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="premium-footer"><span>▣ RAGENIUS</span><span>Smart Search</span><span>AI Answers</span><span>Your Personal Knowledge Hub</span><span class="online">● System Online</span><span>v2.0.0</span></footer>
+</div>
+<script>
+function togglePw(){const pw=document.getElementById('pw');pw.type=pw.type==='password'?'text':'password';}
+</script>
+{% endblock %}

@@ -1,0 +1,158 @@
+{% extends "base_app.html" %}
+{% block title %}Settings · RAGENIUS{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+  <h2 data-i18n="settings_title">⚙️ Settings</h2>
+  <p data-i18n="settings_subtitle">Manage your profile, preferences and account security.</p>
+</div>
+
+<div class="settings-grid">
+
+  <!-- 1. INSTAGRAM / WHATSAPP STYLE COMPACT PROFILE CARD -->
+  <div class="glass-panel panel-box profile-card">
+    <h3 data-i18n="profile">👤 Profile</h3>
+    <div class="settings-profile-row" style="display: flex; align-items: center; gap: 16px;">
+      
+      <!-- WhatsApp Style Compact Circle Avatar Wrapper -->
+      <div class="profile-avatar-wrapper" onclick="document.getElementById('profilePhotoInput').click()" style="cursor: pointer; position: relative; width: 60px; height: 60px; flex-shrink: 0;">
+        <div id="avatarContainer" style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; border: 2px solid #2ee6a6; box-shadow: 0 0 10px rgba(46, 230, 166, 0.3);">
+          {% if current_user.profile_photo_url %}
+            <img id="profilePreview" class="profile-photo" src="{{ current_user.profile_photo_url }}" alt="{{ current_user.username }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+          {% else %}
+            <div id="profilePreview" class="profile-photo avatar-placeholder" style="width: 100%; height: 100%; background: #22e8ff; color: #0f1128; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.4rem;">
+              {{ current_user.username[0]|upper }}
+            </div>
+          {% endif %}
+        </div>
+        
+        <!-- Small Camera Icon Badge (Bottom-Right) -->
+        <div class="avatar-upload-overlay" title="Upload profile photo" style="pointer-events: none; position: absolute; bottom: -2px; right: -2px; background: rgba(15, 17, 40, 0.9); border: 1px solid #2ee6a6; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; color: #2ee6a6;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+        </div>
+      </div>
+
+      <div class="profile-meta">
+        <div class="user-name-title" style="font-weight:700;font-size:1.1rem;">{{ current_user.username }}</div>
+        <div class="user-email-text" style="font-size:.85rem;">{{ current_user.email }}</div>
+        <div class="user-plan-status" style="margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap;">
+          <span class="badge {{ 'badge-premium' if current_user.is_premium else 'badge-free' }}">
+            {{ '⭐ Premium User' if current_user.is_premium else 'Free Plan' }}
+          </span>
+          <span class="badge badge-role">Role: {{ current_user.role|title }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="member-since-tag" style="margin-top:12px;font-size:.8rem;">Member since {{ current_user.created_at.strftime('%d %b %Y') }}</div>
+    
+    <!-- Hidden File Input -->
+    <input type="file" id="profilePhotoInput" accept="image/png, image/jpeg, image/webp" style="display:none;">
+  </div>
+
+  <!-- 2. PREFERENCES CARD -->
+  <div class="glass-panel panel-box">
+    <h3 data-i18n="preferences">🎨 Preferences</h3>
+    <div class="settings-row settings-theme-row">
+      <div>
+        <strong data-i18n="theme">Theme</strong>
+        <small class="setting-help">Choose a clean light or neon dark workspace.</small>
+      </div>
+      <div class="theme-choice" role="group" aria-label="Theme">
+        <button type="button" class="theme-choice-btn" data-theme="light">☀️ Light</button>
+        <button type="button" class="theme-choice-btn" data-theme="dark">🌙 Dark</button>
+      </div>
+    </div>
+    <div class="settings-row language-setting-row">
+      <div>
+        <strong data-i18n="default_language">Default chat language</strong>
+        <small class="setting-help" data-i18n="language_help">Changes the language of the whole RAGENIUS web app and AI replies.</small>
+      </div>
+      <select id="defaultLangSelect" class="settings-select" aria-label="Default chat language">
+        <option value="Auto">✨ Auto</option>
+        <option value="English">🇬🇧 English</option>
+        <option value="Tamil">தமிழ் · Tamil</option>
+        <option value="Tanglish">🔤 Tanglish</option>
+        <option value="Hindi">हिन्दी · Hindi</option>
+        <option value="Telugu">తెలుగు · Telugu</option>
+        <option value="Malayalam">മലയാളം · Malayalam</option>
+        <option value="Kannada">ಕನ್ನಡ · Kannada</option>
+      </select>
+    </div>
+    <div class="settings-row">
+      <span data-i18n="auto_read">Auto read-aloud answers</span>
+      <label class="switch"><input type="checkbox" id="autoReadToggle"><span class="switch-slider"></span></label>
+    </div>
+    <div class="settings-row">
+      <span data-i18n="sound_effects">Sound effects</span>
+      <label class="switch"><input type="checkbox" id="soundToggle" checked><span class="switch-slider"></span></label>
+    </div>
+  </div>
+
+  <!-- 3. AI MODEL CARD -->
+  <div class="glass-panel panel-box">
+    <h3 data-i18n="ai_model">🧬 AI Model</h3>
+    <div class="kv-row"><span>{{ groq_model }}</span><span class="status-ok">{{ '🟢 Online' if groq_configured else '🟡 No API key' }}</span></div>
+    <div class="kv-row"><span data-i18n="web_sources">Web Sources</span><span class="status-ok">🌐 Auto</span></div>
+    <div class="kv-row"><span>Answer style</span><span class="status-ok">✨ Adaptive</span></div>
+  </div>
+
+  <!-- 4. RAGENIUS TIPS CARD -->
+  <div class="glass-panel panel-box">
+    <h3 data-i18n="tips">✨ RAGENIUS Tips</h3>
+    <ul class="insight-list">
+      <li data-i18n="tip_auto">Use <strong>Auto</strong> to let RAGENIUS follow your language naturally.</li>
+      <li data-i18n="tip_voice">Use the 🎤 voice button for hands-free questions.</li>
+      <li data-i18n="tip_pdf">Upload a document when you want answers grounded in your own documents.</li>
+      <li>Ask for a <strong>table</strong>, <strong>flow</strong> or <strong>steps</strong> to get a visual answer.</li>
+      <li>Tap the 🌐 Web or 📄 Source chip under an answer to see its details.</li>
+      <li>Use 👍 / 👎 on answers — RAGENIUS adapts its style to your feedback.</li>
+    </ul>
+  </div>
+
+  <!-- 5. MEMORY CARD -->
+  <div class="glass-panel panel-box">
+    <h3>🧠 What RAGENIUS remembers</h3>
+    <small class="setting-help">Only things you told it about yourself (like your name). Used to chat more naturally. You control it.</small>
+    <div id="memoryList" style="margin-top:10px;"><div class="muted" style="font-size:.8rem;">Loading…</div></div>
+    <button type="button" class="qa-btn danger-action" id="memoryClear" style="margin-top:10px;">🗑️ Forget everything</button>
+  </div>
+
+  <!-- 6. ENTERPRISE SECURITY CARD -->
+  <div class="glass-panel panel-box">
+    <h3>🛡️ Enterprise Security</h3>
+    <div class="kv-row"><span>Role Based Access</span><span class="status-ok">🟢 {{ current_user.role|title }}</span></div>
+    <div class="kv-row"><span>Document isolation</span><span class="status-ok">🟢 User scoped</span></div>
+    <div class="kv-row"><span>Audit logging</span><span class="status-ok">🟢 Enabled</span></div>
+    <div class="kv-row"><span>Tenant</span><span>{{ current_user.tenant_id }}</span></div>
+  </div>
+
+  <!-- 7. CHANGE PASSWORD CARD -->
+  <div class="glass-panel panel-box">
+    <h3 data-i18n="change_password">🔐 Change Password</h3>
+    <form id="changePasswordForm">
+      <div class="field"><span class="icon">🔒</span><input type="password" id="currentPassword" placeholder="Current password" required></div>
+      <div class="field"><span class="icon">🔒</span><input type="password" id="newPassword" placeholder="New password" required minlength="4"></div>
+      <div class="field"><span class="icon">🔒</span><input type="password" id="confirmPassword" placeholder="Confirm new password" required minlength="4"></div>
+      <button type="submit" class="btn-neon" style="max-width:220px;" data-i18n="update_password">Update Password</button>
+    </form>
+  </div>
+
+  <!-- 8. ACCOUNT STATS CARD -->
+  <div class="glass-panel panel-box">
+    <h3 data-i18n="account_stats">📊 Account Stats</h3>
+    <div class="kv-row"><span>Documents uploaded</span><span>{{ stats.documents }}</span></div>
+    <div class="kv-row"><span>Total conversations</span><span>{{ stats.conversations }}</span></div>
+    <div class="kv-row"><span>Questions asked</span><span>{{ stats.questions_asked }}</span></div>
+    <div class="kv-row"><span>AI Model</span><span>{{ groq_model }}</span></div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+{% endblock %}
