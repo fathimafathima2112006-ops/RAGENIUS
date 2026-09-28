@@ -42,7 +42,13 @@
     <div class="kb-health-row"><span>Index coverage</span><strong>{{ stats.documents and 'Ready' or 'Waiting' }}</strong></div>
     <div class="kb-health-row"><span>Searchable chunks</span><strong>{{ stats.total_chunks }}</strong></div>
     <div class="kb-health-row"><span>Pages processed</span><strong>{{ stats.total_pages }}</strong></div>
-    <div class="kb-health-bar"><span style="width:{{ 100 if stats.documents else 0 }}%"></span></div>
+    <div class="kb-health-bar">
+      {% if stats.documents %}
+        <span style="width:100%"></span>
+      {% else %}
+        <span style="width:0%"></span>
+      {% endif %}
+    </div>
     <small>{{ 'Your knowledge sources are available for retrieval.' if stats.documents else 'Add your first source to start building the knowledge base.' }}</small>
   </aside>
 
