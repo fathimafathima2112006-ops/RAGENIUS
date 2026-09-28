@@ -1,5 +1,6 @@
 import os
 import re
+import base64
 import math
 import uuid
 import json
@@ -60,6 +61,9 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(30), default="user")
     tenant_id = db.Column(db.String(80), default="default")
     profile_photo = db.Column(db.String(255), default="")
+    # Persist the actual profile image in the database so it survives reloads/redeploys.
+    profile_photo_data = db.Column(db.Text, default="")
+    profile_photo_mime = db.Column(db.String(80), default="")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     documents = db.relationship("Document", backref="owner", lazy=True, cascade="all, delete-orphan")
     conversations = db.relationship("Conversation", backref="owner", lazy=True, cascade="all, delete-orphan")
@@ -191,6 +195,8 @@ def ensure_schema():
     add_missing("user", "role", "VARCHAR(30) DEFAULT 'user'")
     add_missing("user", "tenant_id", "VARCHAR(80) DEFAULT 'default'")
     add_missing("user", "profile_photo", "VARCHAR(255) DEFAULT ''")
+    add_missing("user", "profile_photo_data", "TEXT DEFAULT ''")
+    add_missing("user", "profile_photo_mime", "VARCHAR(80) DEFAULT ''")
     add_missing("document", "file_type", "VARCHAR(20) DEFAULT 'pdf'")
     add_missing("document", "metadata_json", "TEXT DEFAULT '{}'")
     db.session.commit()
@@ -385,41 +391,20 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    # /login page-ஐ காட்ட வேண்டாம்.
-    # User already logged in என்றால் நேராக dashboard.
-    if current_user.is_authenticated:
-        return redirect(url_for("dashboard"))
-
     if request.method == "POST":
-        identifier = request.form.get("identifier", "").strip()
-        password = request.form.get("password", "")
-
-        user = User.query.filter(
-            (User.username == identifier) |
-            (User.email == identifier.lower())
-        ).first()
-
+        identifier = request.form.get("identifier", "").strip(); password = request.form.get("password", ""); remember = bool(request.form.get("remember"))
+        user = User.query.filter((User.username == identifier) | (User.email == identifier.lower())).first()
         if user and user.check_password(password):
-            login_user(user)
-            audit("login", {"method": "password"}, user.id)
-
-            # Successful login → DIRECT DASHBOARD
-            return redirect(url_for("dashboard"))
-
-        # Wrong login → back to FIRST/HOME page
-        flash("Invalid username/email or password.", "error")
-        return redirect(url_for("welcome"))
-
-    # /login URL open செய்தாலும் second login page காட்டக்கூடாது
+            login_user(user, remember=remember); audit("login", {"method": "password"}, user.id); return redirect(url_for("dashboard"))
+        flash("Invalid username/email or password.", "error"); return redirect(url_for("welcome"))
     return redirect(url_for("welcome"))
 
 
 @app.route("/logout")
 @login_required
 def logout():
-    audit("logout", user_id=current_user.id)
-    logout_user()
-    return redirect(url_for("welcome"))
+    audit("logout", user_id=current_user.id); logout_user(); return redirect(url_for("welcome"))
+
 
 # ---------------------------------------------------------------------------
 # Pages
@@ -542,6 +527,20 @@ def memory_clear():
 def profile_photo(filename):
     if not filename.startswith(f"profile_{current_user.id}_"):
         return "", 403
+
+    # Prefer the database copy. This keeps the selected profile picture stable
+    # across browser reloads and cloud/server restarts.
+    if current_user.profile_photo == filename and current_user.profile_photo_data:
+        try:
+            return app.response_class(
+                base64.b64decode(current_user.profile_photo_data),
+                mimetype=current_user.profile_photo_mime or "image/jpeg",
+                headers={"Cache-Control": "no-cache, must-revalidate"},
+            )
+        except Exception:
+            pass
+
+    # Backward compatibility for older users whose image exists on disk.
     return send_from_directory(UPLOAD_FOLDER, filename)
 
 
@@ -554,14 +553,31 @@ def upload_profile_photo():
     ext = image.filename.rsplit(".", 1)[-1].lower() if "." in image.filename else ""
     if ext not in {"png", "jpg", "jpeg", "webp", "gif"}:
         return jsonify({"success": False, "error": "Use PNG, JPG, JPEG, WEBP or GIF."}), 400
+
+    raw = image.read()
+    if not raw:
+        return jsonify({"success": False, "error": "The selected image is empty."}), 400
+
+    # Save the image itself in the user's database record. Do not depend on
+    # temporary upload folders, because those can be cleared on reload/redeploy.
     filename = f"profile_{current_user.id}_{uuid.uuid4().hex[:12]}.{ext}"
-    image.save(os.path.join(UPLOAD_FOLDER, filename))
     old = current_user.profile_photo or ""
     current_user.profile_photo = filename
+    current_user.profile_photo_data = base64.b64encode(raw).decode("ascii")
+    current_user.profile_photo_mime = image.mimetype or f"image/{'jpeg' if ext in {'jpg', 'jpeg'} else ext}"
     db.session.commit()
-    if old and old.startswith(f"profile_{current_user.id}_"):
-        try: os.remove(os.path.join(UPLOAD_FOLDER, old))
-        except OSError: pass
+
+    # Keep a local copy when possible for compatibility, but it is no longer
+    # the source of truth for the profile picture.
+    try:
+        with open(os.path.join(UPLOAD_FOLDER, filename), "wb") as fh:
+            fh.write(raw)
+        if old and old.startswith(f"profile_{current_user.id}_") and old != filename:
+            try: os.remove(os.path.join(UPLOAD_FOLDER, old))
+            except OSError: pass
+    except OSError:
+        pass
+
     audit("profile_photo_update", {"filename": filename}, current_user.id)
     return jsonify({"success": True, "url": url_for("profile_photo", filename=filename)})
 
