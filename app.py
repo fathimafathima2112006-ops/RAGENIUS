@@ -1252,6 +1252,8 @@ def build_master_prompt(response_language, user_profile, memory_text, format_ins
         "You are an AI: never claim human feelings, experiences or real-world actions, but be natural, kind and personable.\n\n"
         + PERSONA_CORE + "\n" + TANGLISH_STYLE + "\n\n"
         "ANSWER STYLE: Start with the direct answer in the first sentence. Then explain the WHY in plain words, using a tiny real-life analogy or example when the idea is abstract. "
+        "Write like a polished ChatGPT-style assistant: natural, confident, useful and human, but never overdramatic. Do not dump search snippets or repeat the user's words. For simple questions, answer simply. For complex questions, build the answer progressively from the key point to the useful detail. "
+        "Never use a web-search result merely because a keyword matched. Retrieved context is optional evidence; if it is unrelated, ignore it completely. "
         "Sound like a friendly teacher talking, not a textbook: short paragraphs, concrete examples, no jargon without a one-line meaning. "
         "End detailed answers with a one-line takeaway, and optionally one useful follow-up question. Don't pad.\n\n"
         "UNDERSTANDING: Work out what the user REALLY means, not just their keywords. People write casually — slang, typos, abbreviations, phonetic Tamil/Hindi/Telugu/Malayalam/Kannada in English letters (Tanglish), mixed languages, half-sentences. "
@@ -1306,7 +1308,12 @@ def chat():
     sources = []; meaningful = []; web_results = []; retrieval_ms = 0.0; provider_error = None
     meta = {"variants": [], "strategy": ""}
     fast_chat = is_smalltalk(user_message)
-    understanding = None if fast_chat else understand_message(user_message, _hist, doc_titles, memory_text)
+    # Very short personal/emotional statements should stay conversational.
+    # Do this routing before the LLM intent classifier so a phrase such as
+    # "enaku thala valikuthu" never gets sent to web/RAG search just because
+    # the classifier guessed that it was a factual question.
+    personal_chat = bool(not fast_chat and looks_like_feeling(user_message))
+    understanding = None if (fast_chat or personal_chat) else understand_message(user_message, _hist, doc_titles, memory_text)
     intent = (understanding or {}).get("intent", "")
     if understanding:
         save_user_memory(current_user.id, understanding.get("remember"))
@@ -1314,10 +1321,12 @@ def chat():
         # In Auto mode trust the LLM's reading of the user's language/style over regex heuristics.
         if language == "Auto" and not explicit_language and understanding.get("language"):
             response_language = understanding["language"]
-    if not fast_chat and intent not in CHAT_INTENTS and looks_like_feeling(user_message):
+    if personal_chat:
+        intent = "emotional"
+    elif not fast_chat and intent not in CHAT_INTENTS and looks_like_feeling(user_message):
         intent = "emotional"
     response_language = guard_language(user_message, response_language, language, explicit_language)
-    chat_only = fast_chat or intent in CHAT_INTENTS
+    chat_only = fast_chat or personal_chat or intent in CHAT_INTENTS
     llm_start = time.perf_counter()
 
     if chat_only:
