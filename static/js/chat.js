@@ -51,7 +51,7 @@
     return ['Understanding your question…','Deciding whether knowledge lookup is needed…','Writing the answer…'];
   }
   async function runStatusStages(stages) {
-    for (let i=0;i<stages.length;i++) { setAIStatus(stages[i], true); await new Promise(r=>setTimeout(r, i===stages.length-1 ? 70 : 55)); }
+    for (let i=0;i<stages.length;i++) { setAIStatus(stages[i], true); await new Promise(r=>setTimeout(r, i===stages.length-1 ? 180 : 320)); }
   }
 
   if (!chatBody) return;
@@ -189,7 +189,9 @@
       document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
     }
     modal.querySelector('#sourceDetailsType').textContent = kind === 'web' ? '🌐 WEB SOURCE' + (list.length > 1 ? 'S' : '') : '📄 DOCUMENT SOURCE' + (list.length > 1 ? 'S' : '');
-    modal.querySelector('#sourceDetailsBody').innerHTML = list.map(s => kind === 'web' ? `
+    modal.querySelector('#sourceDetailsBody').innerHTML = list.map(raw => {
+      const s = typeof raw === 'string' ? { title: 'Web source', url: raw, snippet: '' } : (raw || {});
+      return kind === 'web' ? `
       <div class="source-item">
         <h3>${escapeHtml(s.title || 'Web source')}</h3>
         <p>${escapeHtml(s.snippet || 'No preview available.')}</p>
@@ -200,7 +202,8 @@
         <h3>📄 ${escapeHtml(s.filename || 'Document')}</h3>
         <div class="source-details-url">Page ${escapeHtml(s.page ?? '—')} · Chunk ${escapeHtml(s.chunk ?? '—')}</div>
         <p>${escapeHtml(s.snippet || 'No preview available.')}…</p>
-      </div>`).join('');
+      </div>`;
+    }).join('');
     modal.classList.add('show');
   }
 
@@ -234,7 +237,7 @@
           shown = Math.min(fullText.length, shown + step);
           answer.innerHTML = formatAnswer(fullText.slice(0, shown));
           scrollToBottom();
-          if (shown >= fullText.length) finish(); else setTimeout(tick, 5);
+          if (shown >= fullText.length) finish(); else setTimeout(tick, 16);
         })();
       } else {
         answer.innerHTML = formatAnswer(fullText);
@@ -244,8 +247,15 @@
     }
 
     if (role !== 'user' && sources && sources.length) {
-      const webs = sources.filter(x => x.type === 'web');
-      const docs = sources.filter(x => x.type !== 'web');
+      // Treat a source as Web whenever the backend provides a web type OR a URL/title.
+      // This also fixes older saved messages where the type field was missing.
+      const isWebSource = (x) => {
+        if (!x) return false;
+        if (typeof x === 'string') return /^https?:\/\//i.test(x) || /\bweb\b/i.test(x);
+        return x.type === 'web' || !!x.url || (!!x.title && !x.filename);
+      };
+      const webs = sources.filter(isWebSource);
+      const docs = sources.filter(x => !isWebSource(x));
       const box = document.createElement('div');
       box.className = 'sources-box';
       // One compact chip per kind — no details visible until the user taps it.
@@ -345,13 +355,13 @@
     lastUserText = text; stopSpeaking();
     appendMessage('user', text);
     showTyping();
-    setAIStatus(statusForQuery(text)[0], true);
+    const statusPromise = runStatusStages(statusForQuery(text));
     try {
       const res = await fetch('/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ conversation_id: currentConversationId, message: text, language: currentLanguage, client_time: (() => { const d = new Date(), z = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`; })() })
       });
-      const data = await res.json(); hideTyping(); setAIStatus('', false);
+      const data = await res.json(); await statusPromise; hideTyping(); setAIStatus('', false);
       if (!data.success) { showToast(data.error || 'Something went wrong', 'error'); return; }
       currentConversationId = data.conversation_id;
       saveCurrentConversation();
