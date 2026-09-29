@@ -1309,7 +1309,18 @@ def chat():
 
     sources = []; meaningful = []; web_results = []; retrieval_ms = 0.0; provider_error = None
     meta = {"variants": [], "strategy": ""}
-    fast_chat = is_smalltalk(user_message)
+
+    # Keep tiny affirmative replies connected to the immediately preceding assistant
+    # question.  Without this, messages such as "yes", "ok", or "sure" are routed
+    # through the generic small-talk path and lose the topic established one turn
+    # earlier.
+    last_assistant = next((m for m in reversed(_hist) if m.role == "assistant"), None)
+    affirmative_followup = bool(
+        re.fullmatch(r"(?:yes|yeah|yep|yup|sure|okay|ok|of course|haan|ama|aama|seri|sari|right|correct|continue|go ahead)[.!?\s]*", user_message.strip(), re.I)
+        and last_assistant
+        and re.search(r"[?]\s*$", (last_assistant.content or "").strip())
+    )
+    fast_chat = is_smalltalk(user_message) and not affirmative_followup
     # Very short personal/emotional statements should stay conversational.
     # Do this routing before the LLM intent classifier so a phrase such as
     # "enaku thala valikuthu" never gets sent to web/RAG search just because
@@ -1332,9 +1343,25 @@ def chat():
     llm_start = time.perf_counter()
 
     if chat_only:
-        answer = converse_llm(user_message, _hist, response_language, user_profile, memory_text, short=(fast_chat or len(user_message.split()) <= 5), emotional=(intent == "emotional"), client_time=data.get("client_time"))
-        confidence = 99.0 if fast_chat else 97.0
-        meta = {"variants": [], "strategy": "human conversation (no retrieval)"}
+        # A one-word affirmative after an assistant question is a real follow-up,
+        # not standalone small talk. Give the model an explicit instruction so it
+        # answers in the established topic instead of resetting to "How can I help?".
+        if affirmative_followup:
+            contextual_message = (
+                "The user replied affirmatively to your immediately preceding question. "
+                "Continue that exact topic naturally. Do not restart the conversation and "
+                "do not ask a generic 'what were you looking to know?' question. If your "
+                "previous question offered several topics, briefly offer those same relevant "
+                "options or ask one specific topic-selection question. Previous assistant "
+                f"message: {(last_assistant.content or '')[:900]}\nUser reply: {user_message}"
+            )
+            answer = converse_llm(contextual_message, _hist, response_language, user_profile, memory_text, short=True, emotional=False, client_time=data.get("client_time"))
+            confidence = 98.0
+            meta = {"variants": [], "strategy": "contextual affirmative follow-up"}
+        else:
+            answer = converse_llm(user_message, _hist, response_language, user_profile, memory_text, short=(fast_chat or len(user_message.split()) <= 5), emotional=(intent == "emotional"), client_time=data.get("client_time"))
+            confidence = 99.0 if fast_chat else 97.0
+            meta = {"variants": [], "strategy": "human conversation (no retrieval)"}
     elif understanding is None and (local_meaning := meaning_fallback(user_message, response_language)):
         answer = local_meaning; confidence = 96.0; meta = {"variants": [], "strategy": "local meaning intent"}
     else:
