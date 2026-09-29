@@ -1347,21 +1347,48 @@ def chat():
             # Original-content requests come from the user's intent, never from whichever PDF shares a generic word.
             meta = {"variants": [user_message], "strategy": "intent gate → creative generation (no retrieval)", "query_intent": detect_query_intent(user_message), "topic_query": user_message, "candidate_count": 0, "rejected_count": 0}
         else:
-            _t = time.perf_counter()
-            results, meta = retrieve_hybrid(current_user.id, standalone, k=6)
-            retrieval_ms = (time.perf_counter() - _t) * 1000
-            # Stricter match unless the user is clearly asking about their documents.
-            threshold = 0.10 if (needs_docs or understanding is None) else 0.28
-            meaningful = [r for r in results if r["rerank_score"] >= threshold]
-            for r in meaningful:
-                d, c = r["doc"], r["chunk"]
-                context_parts.append(f"[Document: {d.filename} | Page {c.page} | Chunk {c.chunk_index+1}]\n{c.text}")
-                sources.append({"type": "pdf", "filename": d.filename, "page": c.page, "chunk": c.chunk_index+1, "score": round(r["rerank_score"], 4), "bm25": round(r["bm25_score"], 4), "vector": round(r["vector_score"], 4), "snippet": c.text[:220]})
-            if not meaningful and needs_web:
+            # Time-sensitive/current questions must use live web retrieval first.
+            # Otherwise a semantically similar PDF chunk can incorrectly win and the UI
+            # will show a document source for an answer that should come from the web.
+            current_web_priority = bool(re.search(
+                r"\b(current|currently|latest|today|tonight|now|recent|recently|this year|2026|present|who is the current)\b",
+                (standalone or "").lower()
+            ))
+            if current_web_priority:
+                needs_web = True
+
+            if current_web_priority and needs_web:
                 web_results = search_web(standalone, max_results=4)
                 for item in web_results:
                     context_parts.append(f"[Web Source: {item['title']}]\nURL: {item['url']}\nSummary: {item['snippet']}")
                     sources.append({"type": "web", "title": item["title"], "url": item["url"], "snippet": item["snippet"][:320]})
+
+                # If live search returns nothing, fall back to the document index.
+                if not web_results:
+                    _t = time.perf_counter()
+                    results, meta = retrieve_hybrid(current_user.id, standalone, k=6)
+                    retrieval_ms = (time.perf_counter() - _t) * 1000
+                    meaningful = [r for r in results if r["rerank_score"] >= 0.10]
+                    for r in meaningful:
+                        d, c = r["doc"], r["chunk"]
+                        context_parts.append(f"[Document: {d.filename} | Page {c.page} | Chunk {c.chunk_index+1}]\n{c.text}")
+                        sources.append({"type": "pdf", "filename": d.filename, "page": c.page, "chunk": c.chunk_index+1, "score": round(r["rerank_score"], 4), "bm25": round(r["bm25_score"], 4), "vector": round(r["vector_score"], 4), "snippet": c.text[:220]})
+            else:
+                _t = time.perf_counter()
+                results, meta = retrieve_hybrid(current_user.id, standalone, k=6)
+                retrieval_ms = (time.perf_counter() - _t) * 1000
+                # Stricter match unless the user is clearly asking about their documents.
+                threshold = 0.10 if (needs_docs or understanding is None) else 0.28
+                meaningful = [r for r in results if r["rerank_score"] >= threshold]
+                for r in meaningful:
+                    d, c = r["doc"], r["chunk"]
+                    context_parts.append(f"[Document: {d.filename} | Page {c.page} | Chunk {c.chunk_index+1}]\n{c.text}")
+                    sources.append({"type": "pdf", "filename": d.filename, "page": c.page, "chunk": c.chunk_index+1, "score": round(r["rerank_score"], 4), "bm25": round(r["bm25_score"], 4), "vector": round(r["vector_score"], 4), "snippet": c.text[:220]})
+                if not meaningful and needs_web:
+                    web_results = search_web(standalone, max_results=4)
+                    for item in web_results:
+                        context_parts.append(f"[Web Source: {item['title']}]\nURL: {item['url']}\nSummary: {item['snippet']}")
+                        sources.append({"type": "web", "title": item["title"], "url": item["url"], "snippet": item["snippet"][:320]})
 
         normalized_query = _normalized_chat_text(standalone)
         format_instruction = ""
