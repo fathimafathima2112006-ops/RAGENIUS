@@ -536,3 +536,14 @@ button, a, input, textarea, select { touch-action: manipulation; }
     font-size: .88rem !important;
   }
 }
+
+/* Source modal follows the selected theme. */
+body.light-mode .source-details-backdrop{background:rgba(238,242,255,.70);backdrop-filter:blur(10px)}
+body.light-mode .source-details-card{background:#ffffff;border-color:rgba(70,58,190,.22);box-shadow:0 24px 70px rgba(45,55,120,.20);color:#12152b}
+body.light-mode .source-details-close{color:#4b5475}
+body.light-mode .source-details-type{color:#315cff}
+body.light-mode .source-details-card h3{color:#12152b}
+body.light-mode .source-details-card p{color:#4b5475}
+body.light-mode .source-details-url{background:#f2f4ff;color:#4b5475;border:1px solid rgba(70,58,190,.12)}
+body.light-mode .source-details-open{color:#fff}
+body.light-mode .source-details-card .source-item{border-color:rgba(70,58,190,.14)}
