@@ -51,7 +51,7 @@
     return ['Understanding your question…','Deciding whether knowledge lookup is needed…','Writing the answer…'];
   }
   async function runStatusStages(stages) {
-    for (let i=0;i<stages.length;i++) { setAIStatus(stages[i], true); await new Promise(r=>setTimeout(r, i===stages.length-1 ? 180 : 320)); }
+    for (let i=0;i<stages.length;i++) { setAIStatus(stages[i], true); await new Promise(r=>setTimeout(r, i===stages.length-1 ? 70 : 55)); }
   }
 
   if (!chatBody) return;
@@ -234,7 +234,7 @@
           shown = Math.min(fullText.length, shown + step);
           answer.innerHTML = formatAnswer(fullText.slice(0, shown));
           scrollToBottom();
-          if (shown >= fullText.length) finish(); else setTimeout(tick, 16);
+          if (shown >= fullText.length) finish(); else setTimeout(tick, 5);
         })();
       } else {
         answer.innerHTML = formatAnswer(fullText);
@@ -345,13 +345,13 @@
     lastUserText = text; stopSpeaking();
     appendMessage('user', text);
     showTyping();
-    const statusPromise = runStatusStages(statusForQuery(text));
+    setAIStatus(statusForQuery(text)[0], true);
     try {
       const res = await fetch('/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ conversation_id: currentConversationId, message: text, language: currentLanguage, client_time: (() => { const d = new Date(), z = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`; })() })
       });
-      const data = await res.json(); await statusPromise; hideTyping(); setAIStatus('', false);
+      const data = await res.json(); hideTyping(); setAIStatus('', false);
       if (!data.success) { showToast(data.error || 'Something went wrong', 'error'); return; }
       currentConversationId = data.conversation_id;
       saveCurrentConversation();
@@ -384,52 +384,27 @@
   });
   document.querySelectorAll('.quick-prompt-chip').forEach(chip => chip.addEventListener('click', () => sendMessage(chip.dataset.prompt)));
 
-  async function createFreshConversation() {
-    const res = await fetch('/api/conversations', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-    const data = await res.json();
-    if (!res.ok || !data.success || !data.conversation_id) throw new Error(data.error || 'Could not create conversation');
-    currentConversationId = data.conversation_id;
+  function startNewChat() {
+    currentConversationId = null;
     saveCurrentConversation();
-    history.replaceState({}, '', `/dashboard?conv=${encodeURIComponent(currentConversationId)}`);
-    return data;
-  }
-
-  async function startNewChat() {
-    try {
-      const data = await createFreshConversation();
-      if (chatTitle) chatTitle.textContent = data.title || 'New Conversation';
-      chatBody.innerHTML = '';
-      appendMessage('bot', 'New conversation started. Ask me anything!');
-      updateContextPanel([]);
-      updateAIActivity([]);
-      chatInput?.focus();
-    } catch {
-      showToast('Could not start a new conversation', 'error');
-    }
+    history.replaceState({}, '', '/dashboard');
+    if (chatTitle) chatTitle.textContent = 'New Conversation';
+    chatBody.innerHTML = '';
+    appendMessage('bot', 'New conversation started. Ask me anything!');
+    updateContextPanel([]);
+    updateAIActivity([]);
+    chatInput?.focus();
   }
   document.getElementById('newChatBtn')?.addEventListener('click', startNewChat);
   document.getElementById('qaNewChat')?.addEventListener('click', startNewChat);
 
   document.getElementById('deleteChatBtn')?.addEventListener('click', async () => {
     if (!currentConversationId) { showToast('No conversation selected'); return; }
-    const idToDelete = currentConversationId;
     try {
-      const res = await fetch(`/api/conversations/${encodeURIComponent(idToDelete)}`, { method: 'DELETE' });
+      const res = await fetch(`/api/conversations/${currentConversationId}`, { method: 'DELETE' });
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'Delete failed');
-      // The deleted ID is cleared before the replacement conversation is created.
-      currentConversationId = null;
-      saveCurrentConversation();
-      const fresh = await createFreshConversation();
-      chatBody.innerHTML = '';
-      if (chatTitle) chatTitle.textContent = fresh.title || 'New Conversation';
-      appendMessage('bot', 'New conversation started. Ask me anything!');
-      updateContextPanel([]);
-      updateAIActivity([]);
-      showToast('Conversation deleted', 'success');
-    } catch (err) {
-      showToast(err?.message || 'Could not delete conversation', 'error');
-    }
+      if (data.success) { showToast('Conversation deleted', 'success'); startNewChat(); }
+    } catch { showToast('Could not delete conversation', 'error'); }
   });
 
   // Restore the same conversation after visiting another page.
